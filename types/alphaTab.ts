@@ -1,8 +1,11 @@
+import * as alphaTab from '@coderline/alphatab'
+
 export interface AlphaTabApi {
   playPause: () => void;
   stop: () => void;
   print: () => void;
   render: () => void;
+  renderTracks: (track: alphaTab.model.Track[]) => void;
   updateSettings: () => void;
   destroy: () => void;
   countInVolume: number;
@@ -13,7 +16,7 @@ export interface AlphaTabApi {
       scale: number;
       layoutMode: number;
       resources: {
-        barNumberColor?: rgb
+        barNumberColor?: string;
       }
     };
   };

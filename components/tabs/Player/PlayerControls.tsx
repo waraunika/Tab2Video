@@ -5,7 +5,9 @@ import { useState } from "react";
 import ZoomControl from "../UI/ZoomControl";
 import LayoutControl from "../UI/LayoutControl";
 import { AlphaTabApi } from "@/types/alphaTab";
+import * as alphaTab from '@coderline/alphatab'
 import { Button } from "@/components/ui/button";
+import TrackSelector from "./TrackSelector";
 
 interface Position {
   current: string;
@@ -17,6 +19,7 @@ interface PlayerControlProps {
   isPlayerReady: boolean;
   isPlaying: boolean;
   position: Position;
+  tracks: alphaTab.model.Track[];
   onShowEditor: () => void;
 }
 
@@ -25,6 +28,7 @@ export function PlayerControl({
   isPlayerReady,
   isPlaying,
   position,
+  tracks,
   onShowEditor
 }: PlayerControlProps) {
   const [countInActive, setCountInActive] = useState(false);
@@ -79,6 +83,11 @@ export function PlayerControl({
         >
           <StepBack size={18} />
         </Button>
+
+        <TrackSelector
+          tracks={tracks}
+          apiRef={apiRef}
+        />
 
         <Button
           onClick={togglePlay}

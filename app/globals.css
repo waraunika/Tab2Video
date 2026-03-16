@@ -77,20 +77,24 @@
   pointer-events: none;
   border-radius: 5px;
   margin-top: 5px;
+  z-index: 10;
 }
 
 .at-selection div {
   background: rgba(64, 120, 255, 0.08);
   pointer-events: none;
+  z-index: 10;
 }
 
 .at-cursor-beat {
   background: rgba(64, 120, 255, 0.5);
   width: 3px;
   pointer-events: none;
+  z-index: 10;
 }
 
 .at-highlight * {
   fill: #4078ff;
   stroke: #4078ff;
+  z-index: 10;
 }

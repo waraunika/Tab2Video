@@ -1,4 +1,4 @@
-import AlphaTabViewer from "@/components/AlphaTabViewer";
+import AlphaTabViewer from "@/components/tabs/AlphaTabViewer";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/footer";
 

@@ -22,7 +22,7 @@ interface ZoomControlProps {
 export default function ZoomControl({ apiRef}: ZoomControlProps) {
   const [selectValue, setSelectValue] = useState("100");
 
-  function handleZoom(value: string): void {
+  function handleZoom(value: string) {
     const zoom = parseInt(value) / 100;
     setSelectValue(value);
     if (apiRef) {
