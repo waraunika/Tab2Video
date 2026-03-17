@@ -7,6 +7,7 @@ import "@/app/globals.css";
 import { AlphaTabApi } from "@coderline/alphatab";
 import * as alphaTab from "@coderline/alphatab";
 import { useTheme } from "next-themes";
+import TrackSelectorModal from "./Editor/TrackSelectorModal";
 
 const lightTheme = {
   staffLineColor: "#e4e4e7",
@@ -26,12 +27,13 @@ const darkTheme = {
   barNumberColor: "#d4d4d8",
 };
 
-const TAB_FILE_URL =
-  "https://www.alphatab.net/files/canon.gp";
+const TAB_FILE_URL = "https://www.alphatab.net/files/canon.gp";
 const SOUNDFONT_URL =
   "https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/soundfont/sonivox.sf2";
 
 export default function AlphaTabViewer() {
+  const { resolvedTheme } = useTheme();
+
   const wrapperRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
@@ -45,9 +47,17 @@ export default function AlphaTabViewer() {
     current: "00:00",
     total: "00:00",
   });
+  const [editorModalActive, setEditorModalActive] = useState(false);
   const [editorActive, setEditorActive] = useState(false);
-  const { resolvedTheme } = useTheme();
   const [tracks, setTracks] = useState<alphaTab.model.Track[] | null>(null);
+  const [editTrack, setEditTrack] = useState<alphaTab.model.Track | null>(null);
+  const [alphaTexContent, setAlphaTexContent] = useState(`\\title "My Tab"
+\\subtitle "In AlphaTeX"
+\\tempo 120
+
+. \\notes :4 C D E F | G A B c |
+. \\notes :8 C D E F G A B c |
+`);
 
   useEffect(() => {
     const getThemeColors = () => {
@@ -90,7 +100,7 @@ export default function AlphaTabViewer() {
       const colors = resolvedTheme === "dark" ? darkTheme : lightTheme;
 
       const settings = {
-        file: TAB_FILE_URL,
+        file: editorActive ? null : TAB_FILE_URL,
         player: {
           enablePlayer: true,
           soundFont: SOUNDFONT_URL,
@@ -135,8 +145,8 @@ export default function AlphaTabViewer() {
       apiRef.current = api;
 
       api.scoreLoaded.on((score) => {
-        setTracks(score.tracks)
-      })
+        setTracks(score.tracks);
+      });
 
       api.renderStarted.on(() => {
         setIsLoading(true);
@@ -173,7 +183,7 @@ export default function AlphaTabViewer() {
     return () => {
       apiRef.current?.destroy();
     };
-  }, [resolvedTheme]);
+  }, [resolvedTheme, editorActive]);
 
   function formatTime(ms: number) {
     const totalSeconds = Math.floor(ms / 1000);
@@ -182,9 +192,21 @@ export default function AlphaTabViewer() {
     return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   }
 
-  function showEditor() {
-    const newValue = !editorActive;
-    setEditorActive(newValue);
+  function showEditorModal() {
+    const newValue = !editorModalActive;
+    setEditorModalActive(newValue);
+  }
+
+  function handleAlphaTexChange(newContent: string) {
+    setAlphaTexContent(newContent);
+    if (apiRef.current && editorActive) {
+    }
+  }
+
+  function handleEditTrackSelect() {
+    setEditorModalActive(false);
+    console.log(alphaTexContent);
+    setEditorActive(true);
   }
 
   return (
@@ -192,6 +214,17 @@ export default function AlphaTabViewer() {
       ref={wrapperRef}
       className="w-[90vw] h-[85vh] flex flex-col border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-zinc dark:bg-zinc-950 shadow-lg relative"
     >
+      {editorModalActive && (
+        <TrackSelectorModal
+          editorModalActive={editorModalActive}
+          onClose={handleEditTrackSelect}
+          onTrackSelect={setEditTrack}
+          tracks={tracks}
+          apiRef={apiRef.current}
+          onTexUpdate={setAlphaTexContent}
+        />
+      )}
+
       {/* Loading overlay */}
       {isLoading && (
         <div className="absolute inset-0 z-10 backdrop-blur-sm bg-zinc/75 dark:bg-zinc-950/75 flex justify-center items-start">
@@ -203,27 +236,39 @@ export default function AlphaTabViewer() {
         </div>
       )}
 
-      {editorActive && <EditBox />}
+      <div className="flex w-full h-full">
+        {editorActive && (
+          <div className="w-1/2 h-full border-r border-zinc-200 dark:border-zinc-800">
+            <EditBox
+              value={alphaTexContent}
+              onChange={handleAlphaTexChange}
+              apiRef={apiRef.current}
+            />
+          </div>
+        )}
 
-      {/* Controls bar */}
-      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <PlayerControl
-          apiRef={apiRef.current}
-          isPlayerReady={isPlayerReady}
-          isPlaying={isPlaying}
-          position={position}
-          onShowEditor={showEditor}
-          tracks={tracks}
-        />
-      </div>
-
-      {/* Sheet music viewport */}
-      <div className="flex-1 overflow-hidden relative">
         <div
-          ref={viewportRef}
-          className="absolute inset-0 overflow-y-auto px-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-zinc-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 [&::-webkit-scrollbar-thumb]:rounded-full z-0 h-auto"
+          className={`flex flex-col h-full ${editorActive ? "w-1/2" : "w-full"}`}
         >
-          <div ref={mainRef} />
+          <div className="flex-shrink-0 flex items-center gap-3 px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+            <PlayerControl
+              apiRef={apiRef.current}
+              isPlayerReady={isPlayerReady}
+              isPlaying={isPlaying}
+              position={position}
+              onShowEditorModal={showEditorModal}
+              tracks={tracks}
+            />
+          </div>
+
+          <div className="flex-1 overflow-hidden relative">
+            <div
+              ref={viewportRef}
+              className="absolute inset-0 overflow-y-auto px-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-zinc-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 [&::-webkit-scrollbar-thumb]:rounded-full z-0 h-auto"
+            >
+              <div ref={mainRef} />
+            </div>
+          </div>
         </div>
       </div>
     </div>

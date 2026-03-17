@@ -15,7 +15,9 @@ export default function TrackSelector({tracks, apiRef}: TrackSelectorProps) {
 
   function getIcon(track: alphaTab.model.Track) {
     const program = track.playbackInfo.program;
-    if (program >= 25 && program <= 27) {
+    // reference for program of midi: https://midiprog.com/program-numbers/
+
+    if (program >= 25 && program <= 27 || program === 121) {
       return <Guitar />
     }
     if (program >= 28 && program <= 32) {
@@ -45,7 +47,7 @@ export default function TrackSelector({tracks, apiRef}: TrackSelectorProps) {
   function handleTrackSelect(indexString: string) {
     const index = parseInt(indexString);
     setSelectedTrackIndex(index);
-    if (apiRef) {
+    if (apiRef && tracks) {
       apiRef.renderTracks([tracks[index]]);
     }
   }

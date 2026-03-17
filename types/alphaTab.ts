@@ -8,6 +8,7 @@ export interface AlphaTabApi {
   renderTracks: (track: alphaTab.model.Track[]) => void;
   updateSettings: () => void;
   destroy: () => void;
+  tex: (texString: string) => void;
   countInVolume: number;
   metronomeVolume: number;
   isLooping: boolean;
@@ -20,4 +21,7 @@ export interface AlphaTabApi {
       }
     };
   };
+  exporter: {
+    AlphaTexExporter: () => void;
+  }
 }

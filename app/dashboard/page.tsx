@@ -2,21 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { isUserAdmin } from "@/lib/supabase/admin-check";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
-import { redirect } from "next/navigation";
-
-import { FetchDataSteps } from "@/components/tutorial/fetch-data-steps";
-import { Suspense } from "react";
-
-async function UserDetails() {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
-
-  if (error || !data?.claims) {
-    redirect("/auth/login");
-  }
-
-  return JSON.stringify(data.claims, null, 2);
-}
 
 export default async function ProtectedPage() {
   const supabase = await createClient();
@@ -27,16 +12,7 @@ export default async function ProtectedPage() {
   return (
     <div className="flex-1 w-full flex flex-col gap-12">
       <div className="w-full">
-        <div className="bg-accent text-sm p-3 px-5 rounded-md text-foreground flex gap-3 items-center">
-          <div className="flex items-center gap-2">
-            <span className="font-mono">Logged in as:</span>
-            <span className="font-bold">{user?.email}</span>
-            {isAdmin && (
-              <span className="bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded text-xs font-bold">
-                ADMIN
-              </span>
-            )}
-          </div>
+        <div className="text-sm p-3 px-5 rounded-md text-foreground flex gap-3 items-center">
 
           <div className="flex gap-2">
             {isAdmin && (
@@ -142,19 +118,6 @@ export default async function ProtectedPage() {
             </div>
           )}
         </div>
-      </div>
-
-      <div className="flex flex-col gap-2 items-start">
-        <h2 className="font-bold text-2xl mb-4">Your user details</h2>
-        <pre className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
-          <Suspense>
-            <UserDetails />
-          </Suspense>
-        </pre>
-      </div>
-      <div>
-        <h2 className="font-bold text-2xl mb-4">Next steps</h2>
-        <FetchDataSteps />
       </div>
     </div>
   );

@@ -19,8 +19,9 @@ interface PlayerControlProps {
   isPlayerReady: boolean;
   isPlaying: boolean;
   position: Position;
-  tracks: alphaTab.model.Track[];
-  onShowEditor: () => void;
+  tracks: alphaTab.model.Track[] | null;
+  editorActive: boolean;
+  onShowEditorModal: () => void;
 }
 
 export function PlayerControl({
@@ -29,7 +30,8 @@ export function PlayerControl({
   isPlaying,
   position,
   tracks,
-  onShowEditor
+  editorActive,
+  onShowEditorModal
 }: PlayerControlProps) {
   const [countInActive, setCountInActive] = useState(false);
   const [metronomeActive, setMetronomeActive] = useState(false);
@@ -148,10 +150,11 @@ export function PlayerControl({
         </Button>
 
         <Button
-          onClick={onShowEditor}
+          onClick={onShowEditorModal}
           disabled={!isPlayerReady}
           title="Edit"
           variant={"secondary"}
+          className={`${editorActive ? 'bg-zinc-500' : ''}`}
         >
           <Pencil size={18} />
         </Button>
