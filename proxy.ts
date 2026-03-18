@@ -21,9 +21,7 @@ export async function proxy(request: NextRequest) {
 
   const isDashboardRoute = request.nextUrl.pathname.startsWith('/dashboard');
 
-  const isTabRoute = request.nextUrl.pathname.startsWith('/tabs')
-
-  // const isHomeRoute = request.nextUrl.pathname === '/';
+  const isTabRoute = request.nextUrl.pathname.startsWith('/upload-tab')
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

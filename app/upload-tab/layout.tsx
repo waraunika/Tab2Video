@@ -11,15 +11,7 @@ export default async function DashboardLayout({
       <div className="flex-1 w-full flex flex-col items-center">
         <Navbar />
         <div className="flex-1 flex flex-col max-w-5xl p-5">
-          <Suspense>
-            <h1 className="text-3xl font-bold mb-8 text-zinc-800 dark:text-zinc-200 text-center">
-              Upload Tab
-            </h1>
-
-            <div className="container mx-auto px-4 py-8">
-              {children}
-            </div>
-          </Suspense>
+          <Suspense>{children}</Suspense>          
         </div>
       </div>
     </main>

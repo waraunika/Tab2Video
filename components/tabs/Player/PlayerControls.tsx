@@ -24,7 +24,7 @@ interface PlayerControlProps {
   onShowEditorModal: () => void;
 }
 
-export function PlayerControl({
+export default function PlayerControl({
   apiRef,
   isPlayerReady,
   isPlaying,

@@ -28,19 +28,7 @@ export default async function ProtectedPage() {
         <h1 className="text-3xl font-bold">Your Dashboard</h1>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Link href='/tabs/new' className="block">
-            <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
-              <h2 className="text-xl font-semibold mb-2">
-                Create New Tab
-              </h2>
-
-              <p className="text-muted-foreground">
-                Create a new tab from scratch
-              </p>
-            </div>
-          </Link>
-
-          <Link href='/tabs/upload' className="block">
+          <Link href='/upload-tab' className="block">
             <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
               <h2 className="text-xl font-semibold mb-2">
                 Upload New Tab

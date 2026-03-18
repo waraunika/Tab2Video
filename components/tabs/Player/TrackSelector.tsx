@@ -62,7 +62,7 @@ export default function TrackSelector({tracks, apiRef}: TrackSelectorProps) {
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="z-50 bg-white">
+        <DropdownMenuContent className="z-50">
           <DropdownMenuRadioGroup
             value={selectedTrackIndex.toString()}
             onValueChange={handleTrackSelect}
