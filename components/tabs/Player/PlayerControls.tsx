@@ -4,7 +4,7 @@ import { Hourglass, Metronome, Pause, Pencil, Play, Printer, Repeat, StepBack } 
 import { useState } from "react";
 import ZoomControl from "../UI/ZoomControl";
 import LayoutControl from "../UI/LayoutControl";
-import { AlphaTabApi } from "@/types/alphaTab";
+import { AlphaTabApi } from "@coderline/alphatab";
 import * as alphaTab from '@coderline/alphatab'
 import { Button } from "@/components/ui/button";
 import TrackSelector from "./TrackSelector";

@@ -10,21 +10,21 @@ import PlayerControl from "./Player/PlayerControls";
 import EditBox from "./Editor/EditBox";
 
 const lightTheme = {
-  staffLineColor: "#e4e4e7",
-  barSeparatorColor: "#a1a1aa",
-  mainGlyphColor: "#27272a",
-  secondaryGlyphColor: "#44403c",
-  scoreInfoColor: "#18181b",
-  barNumberColor: "#828291",
+  staffLineColor: new alphaTab.model.Color(228, 228, 231),
+  barSeparatorColor: new alphaTab.model.Color(161, 161, 170),
+  mainGlyphColor: new alphaTab.model.Color(39, 39, 42),
+  secondaryGlyphColor: new alphaTab.model.Color(68, 64, 60),
+  scoreInfoColor: new alphaTab.model.Color(24, 24, 27),
+  barNumberColor: new alphaTab.model.Color(130, 130, 145),
 };
 
 const darkTheme = {
-  staffLineColor: "#44403c",
-  barSeparatorColor: "#828291",
-  mainGlyphColor: "#f4f4f5",
-  secondaryGlyphColor: "#e4e4e7",
-  scoreInfoColor: "#ffffff",
-  barNumberColor: "#d4d4d8",
+  staffLineColor: new alphaTab.model.Color(68, 64, 60),
+  barSeparatorColor: new alphaTab.model.Color(130, 130, 145),
+  mainGlyphColor: new alphaTab.model.Color(244, 244, 245),
+  secondaryGlyphColor: new alphaTab.model.Color(228, 228, 231),
+  scoreInfoColor: new alphaTab.model.Color(255, 255, 255),
+  barNumberColor: new alphaTab.model.Color(212, 212, 216),
 };
 
 // const DEFAULT_TAB_URL = "https://www.alphatab.net/files/canon.gp";
@@ -141,55 +141,29 @@ export default function AlphaTabViewer({
       const colors = resolvedTheme === "dark" ? darkTheme : lightTheme;
 
       const initialFile = editorActive ? null : (fileUrl ?? DEFAULT_TAB_URL);
-
-      const settings = {
-        file: initialFile,
-        player: {
-          enablePlayer: true,
-          soundFont: SOUNDFONT_URL,
-          scrollElement: viewportRef.current!,
-          enableCursor: true,
-          enableUserInteraction: true,
-        },
-        display: {
-          scale: 1.0,
-          layoutMode: alphaTab.LayoutMode.Horizontal,
-          resources: {
-            staffLineColor: alphaTab.model.Color.fromJson(
-              colors.staffLineColor,
-            ),
-            barSeparatorColor: alphaTab.model.Color.fromJson(
-              colors.barSeparatorColor,
-            ),
-            mainGlyphColor: alphaTab.model.Color.fromJson(
-              colors.mainGlyphColor,
-            ),
-            secondaryGlyphColor: alphaTab.model.Color.fromJson(
-              colors.secondaryGlyphColor,
-            ),
-            scoreInfoColor: alphaTab.model.Color.fromJson(
-              colors.scoreInfoColor,
-            ),
-            barNumberColor: alphaTab.model.Color.fromJson(
-              colors.barNumberColor,
-            ),
-          },
-        },
-        // Point workers to the CDN so Next.js doesn't need to bundle them
-        core: {
-          scriptFile:
-            "https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/alphaTab.js",
-          fontDirectory:
-            "https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/font/",
-        },
-      };
+      const settings = new alphaTab.Settings();
+      settings.core.file = initialFile;
+      settings.core.scriptFile = "https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/alphaTab.js";
+      settings.core.fontDirectory = "https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/font/";
+      settings.player.playerMode = alphaTab.PlayerMode.EnabledAutomatic;
+      settings.player.soundFont = SOUNDFONT_URL;
+      settings.player.scrollElement = viewportRef.current!;
+      settings.player.enableCursor = true;
+      settings.player.enableUserInteraction = true;
+      settings.display.scale = 1.0;
+      settings.display.layoutMode = alphaTab.LayoutMode.Horizontal;
+      settings.display.resources.staffLineColor = colors.staffLineColor;
+      settings.display.resources.barSeparatorColor = colors.barSeparatorColor;
+      settings.display.resources.mainGlyphColor = colors.mainGlyphColor;
+      settings.display.resources.secondaryGlyphColor = colors.secondaryGlyphColor;
+      settings.display.resources.scoreInfoColor = colors.scoreInfoColor;
+      settings.display.resources.barNumberColor = colors.barNumberColor;
 
       const api = new alphaTab.AlphaTabApi(mainRef.current!, settings);
       apiRef.current = api;
 
       api.scoreLoaded.on((score) => {
         setTracks(score.tracks);
-        if (onScoreLoaded) onScoreLoaded(score);
       });
 
       api.renderStarted.on(() => setIsLoading(true));
@@ -294,6 +268,7 @@ export default function AlphaTabViewer({
               isPlayerReady={isPlayerReady}
               isPlaying={isPlaying}
               position={position}
+              editorActive={editorActive}
               onShowEditorModal={showEditorModal}
               tracks={tracks}
             />

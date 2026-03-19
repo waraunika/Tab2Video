@@ -3,27 +3,22 @@
 import AlphaTabViewer from "@/components/tabs/AlphaTabViewer";
 import FileUploader from "@/components/tabs/FileUploader";
 import { Button } from "@/components/ui/button";
-import { useTempTabFile } from "@/hooks/useTempTabFile";
+import { useUploadFile } from "@/hooks/useUploadFile";
 import { useState } from "react";
 
 export default function UploadTabs() {
   const {
     fileUrl,
+    fileName,
     isUploading,
     error,
-    uploadTempFile,
-    cleanupTempFile
-  } = useTempTabFile();
+    uploadTabFile,
+  } = useUploadFile();
   const [currentFileName, setCurrentFileName] = useState<string | null>(null);
 
   async function handleFileLoaded(file: File) {
     setCurrentFileName(file.name);
-    await uploadTempFile(file);
-  }
-
-  async function handleCancel() {
-    await cleanupTempFile();
-    setCurrentFileName(null);
+    await uploadTabFile(file);
   }
 
   async function handleSave() {
@@ -50,7 +45,7 @@ export default function UploadTabs() {
       {error && (
         <div className="flex flex-col items-center justify-center h-64 gap-4">
           <p className="text-red-500 text-sm">{error}</p>
-          <Button variant="outline" onClick={handleCancel}>Try again</Button>
+          
         </div>
       )}
 
@@ -62,7 +57,6 @@ export default function UploadTabs() {
               {currentFileName}
             </h2>
             <div className="flex gap-3">
-              <Button onClick={handleCancel} variant="destructive">Cancel</Button>
               <Button onClick={handleSave} variant="default">Save Tab</Button>
             </div>
           </div>

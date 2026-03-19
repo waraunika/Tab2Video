@@ -41,7 +41,7 @@ export function useUploadFile(): UseUploaadFileReturn {
       setFileUrl(fileUrl);
       setFileName(fileName);
     } catch (error) {
-      setError(error.message ?? "Unknown error");
+      setError(error + "Unknown error");
     } finally {
       setIsUploading(false);
     }
