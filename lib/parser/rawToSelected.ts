@@ -16,6 +16,7 @@ interface ParsedTrack {
   instrument: string;
   lines: string[];
   startLine: number;
+  endLine: number;
 }
 
 class AlphaTexGuitarParser {
@@ -24,47 +25,20 @@ class AlphaTexGuitarParser {
 
   constructor(config: ParserConfig = {}) {
     this.config = {
-      verbose: true,
+      verbose: false, // Default to false for production
       ...config,
     };
 
     this.guitarKeywords = [
-      "guitar",
-      "e-gt",
-      "s-gt",
-      "distortion",
-      "overdriven",
-      "clean",
-      "distortionguitar",
-      "electric",
-      "acoustic",
-      "steel",
-      "nylon",
-      "jazz",
-      "rock",
-      "metal",
-      "lead",
-      "rhythm",
-      "muted",
-      "harmonics",
-      "feedback",
-      "chorus",
-      "funk",
-      "hawaiian",
-      "mid tone",
-      "pinch",
-      "overdrive",
-      "bass",
-      "ukulele",
-      "mandolin",
-      "banjo",
+      "guitar", "e-gt", "s-gt", "distortion", "overdriven", "clean",
+      "distortionguitar", "electric", "acoustic", "steel", "nylon",
+      "jazz", "rock", "metal", "lead", "rhythm", "muted", "harmonics",
+      "feedback", "chorus", "funk", "hawaiian", "mid tone", "pinch",
+      "overdrive", "bass", "ukulele", "mandolin", "banjo",
       ...(config.customKeywords || []),
     ];
   }
 
-  /**
-   * Get list of all guitar tracks with their details
-   */
   public listGuitarTracks(alphaTexString: string): TrackInfo[] {
     const tracks = this.parseTracks(alphaTexString);
     const guitarTracks = tracks.filter((track) =>
@@ -78,9 +52,6 @@ class AlphaTexGuitarParser {
     }));
   }
 
-  /**
-   * Extract a specific guitar track
-   */
   public extractGuitarTrack(
     alphaTexString: string,
     selection: number | string,
@@ -92,19 +63,16 @@ class AlphaTexGuitarParser {
       );
 
       if (guitarTracks.length === 0) {
-        return { success: false, error: "No guitar tracks found in the AlphaTex content" };
+        return { success: false, error: "No guitar tracks found" };
       }
 
-      // Find selected track
       let selectedTrack: ParsedTrack | undefined;
 
       if (typeof selection === "number") {
-        // Selection by number (1-based)
         if (selection >= 1 && selection <= guitarTracks.length) {
           selectedTrack = guitarTracks[selection - 1];
         }
       } else {
-        // Selection by name (case-insensitive partial match)
         const lowerSel = selection.toLowerCase();
         selectedTrack = guitarTracks.find(
           (track) =>
@@ -119,20 +87,11 @@ class AlphaTexGuitarParser {
           .join("\n");
         return {
           success: false,
-          error: `Could not find guitar track matching: ${selection}\n\nAvailable tracks:\n${availableTracks}`,
+          error: `Track not found: ${selection}\n\nAvailable tracks:\n${availableTracks}`,
         };
       }
 
-      if (this.config.verbose) {
-        console.log(
-          `\n✅ Extracted: ${selectedTrack.name} (${selectedTrack.instrument})`,
-        );
-      }
-
-      // Extract header (everything before first track)
       const header = this.extractHeader(alphaTexString);
-
-      // Combine header with selected track
       const content = [...header, ...selectedTrack.lines].join("\n");
 
       return {
@@ -143,54 +102,66 @@ class AlphaTexGuitarParser {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : "An unknown error occurred",
+        error: error instanceof Error ? error.message : "Unknown error occurred",
       };
     }
   }
 
-  // Private methods
   private parseTracks(alphaTexString: string): ParsedTrack[] {
     const lines = alphaTexString.split("\n");
     const tracks: ParsedTrack[] = [];
 
-    let inTrack = false;
-    let currentTrack: string[] = [];
-    let currentTrackName = "";
-    let currentTrackStartLine = 0;
-
-    for (let i = 0; i < lines.length; i++) {
+    let i = 0;
+    while (i < lines.length) {
       const line = lines[i];
-      if (line === undefined) continue;
+      if (!line) {
+        i++;
+        continue;
+      }
 
       const trimmed = line.trim();
 
       if (this.isTrackStart(trimmed)) {
-        if (inTrack && currentTrack.length > 0) {
-          tracks.push({
-            name: currentTrackName,
-            instrument: this.extractInstrumentInfo(currentTrack),
-            lines: [...currentTrack],
-            startLine: currentTrackStartLine,
-          });
+        const trackStartLine = i;
+        const trackName = this.extractTrackName(line);
+        const trackLines: string[] = [line];
+
+        let j = i + 1;
+        let nextTrackIndex = -1;
+
+        for (let k = j; k < lines.length; k++) {
+          const nextLine = lines[k];
+          if (nextLine && this.isTrackStart(nextLine.trim())) {
+            nextTrackIndex = k;
+            break;
+          }
         }
 
-        inTrack = true;
-        currentTrack = [line];
-        currentTrackStartLine = i;
-        currentTrackName = this.extractTrackName(line);
-      } else if (inTrack) {
-        currentTrack.push(line);
-
-        if (trimmed === "}") {
-          tracks.push({
-            name: currentTrackName,
-            instrument: this.extractInstrumentInfo(currentTrack),
-            lines: [...currentTrack],
-            startLine: currentTrackStartLine,
-          });
-          inTrack = false;
-          currentTrack = [];
+        if (nextTrackIndex !== -1) {
+          for (let k = j; k < nextTrackIndex; k++) {
+            if (lines[k] !== undefined) {
+              trackLines.push(lines[k]);
+            }
+          }
+          i = nextTrackIndex;
+        } else {
+          for (let k = j; k < lines.length; k++) {
+            if (lines[k] !== undefined) {
+              trackLines.push(lines[k]);
+            }
+          }
+          i = lines.length;
         }
+
+        tracks.push({
+          name: trackName,
+          instrument: this.extractInstrumentInfo(trackLines),
+          lines: trackLines,
+          startLine: trackStartLine,
+          endLine: i - 1,
+        });
+      } else {
+        i++;
       }
     }
 
@@ -202,7 +173,7 @@ class AlphaTexGuitarParser {
     const header: string[] = [];
 
     for (const line of lines) {
-      if (line === undefined) continue;
+      if (!line) continue;
       if (this.isTrackStart(line.trim())) {
         break;
       }
@@ -228,12 +199,10 @@ class AlphaTexGuitarParser {
   private isGuitarInstrument(text: string): boolean {
     const lowerText = text.toLowerCase();
 
-    // Check for explicit guitar
     if (lowerText.includes("guitar") && !lowerText.includes("piano")) {
       return true;
     }
 
-    // Check keywords
     return this.guitarKeywords.some(
       (keyword) =>
         lowerText.includes(keyword) &&
@@ -272,54 +241,32 @@ class AlphaTexGuitarParser {
 }
 
 /**
- * Main parser function
- * @param text - The AlphaTex content string
- * @param name - Track name or number to extract (e.g., "Lead", "Acoustic", or "1")
- * @returns Extracted guitar track content or error message
+ * Main parser function for website use
+ * @param text - AlphaTex content string
+ * @param name - Track name or number to extract
+ * @returns Extracted guitar track content as string
  */
 export default function parser(text: string, name: string): string {
-  console.log("\n🎸 AlphaTex Guitar Track Extractor\n");
-
-  const parser = new AlphaTexGuitarParser({ verbose: true });
+  const parser = new AlphaTexGuitarParser({ verbose: false });
 
   try {
-    // First, check if it's a number or string selection
+    // Convert name to number if it's a numeric string
     let selection: number | string = name;
-    
-    // Try to parse as number if it's a numeric string
     if (!isNaN(Number(name)) && name.trim() !== "") {
       selection = Number(name);
     }
 
-    // List available tracks for debugging
-    console.log("Available guitar tracks:");
-    const tracks = parser.listGuitarTracks(text);
-    
-    if (tracks.length === 0) {
-      throw new Error("No guitar tracks found in the AlphaTex content");
-    }
-    
-    tracks.forEach((track) => {
-      console.log(`  ${track.number}. ${track.name} (${track.instrument})`);
-    });
-
-    // Extract the selected track
-    console.log(`\n--- Extracting track: ${name} ---`);
     const result = parser.extractGuitarTrack(text, selection);
     
     if (result.success && result.content) {
-      console.log(`✅ Successfully extracted: ${result.trackName}`);
       return result.content;
     } else {
-      throw new Error(result.error || "Unknown error occurred");
+      return `Error: ${result.error || "Extraction failed"}`;
     }
-    
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-    console.error("❌ Error:", errorMessage);
-    return `Error: ${errorMessage}`;
+    return `Error: ${error instanceof Error ? error.message : "Unknown error"}`;
   }
 }
 
-// Optional: Export the class for more advanced usage
-export { AlphaTexGuitarParser, type ParserConfig, type TrackInfo };
+// Export types for TypeScript users
+export { AlphaTexGuitarParser, type TrackInfo, type ParserConfig };

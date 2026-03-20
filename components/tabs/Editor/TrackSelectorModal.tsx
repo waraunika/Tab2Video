@@ -44,7 +44,7 @@ export default function TrackSelectorModal({
     }
     const trackName = guitarTracks[index].name;
     const exporter = new alphaTab.exporter.AlphaTexExporter();
-    const alphaTex = exporter.exportToString(apiRef.score);
+    const alphaTex = exporter.exportToString(apiRef.score);    
     const parseText = parser(alphaTex,trackName);
     onTexUpdate(parseText);
 
