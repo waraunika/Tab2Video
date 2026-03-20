@@ -27,7 +27,6 @@ const darkTheme = {
   barNumberColor: new alphaTab.model.Color(212, 212, 216),
 };
 
-// const DEFAULT_TAB_URL = "https://www.alphatab.net/files/canon.gp";
 const DEFAULT_TAB_URL = "https://www.alphatab.net/files/canon.gp";
 const SOUNDFONT_URL =
   "https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/soundfont/sonivox.sf2";
@@ -82,7 +81,7 @@ export default function AlphaTabViewer({
   const setViewportRef = useCallback((node: HTMLDivElement | null) => {
     viewportRef.current = node;
     if (node && mainRef.current) setRefsReady(true);
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (!refsReady) return;
@@ -115,7 +114,6 @@ export default function AlphaTabViewer({
   }, [resolvedTheme, isPlayerReady, refsReady]);
 
   useEffect(() => {
-    // AlphaTab must only run in the browser (no SSR)
     if (typeof window === "undefined") return;
     if (!mainRef.current || !viewportRef.current) return;
 
@@ -133,7 +131,6 @@ export default function AlphaTabViewer({
     setIsPlayerReady(false);
     setIsPlaying(false);
 
-    // Dynamically import alphatab to ensure browser-only execution
     import("@coderline/alphatab").then((alphaTab) => {
       if (destroyed) return;
       if (!mainRef.current || !viewportRef.current) return;
@@ -225,7 +222,7 @@ export default function AlphaTabViewer({
   }
 
   return (
-    <div className="w-[90vw] h-[85vh] flex flex-col border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-zinc dark:bg-zinc-950 shadow-lg relative">
+    <div className="w-full h-[85vh] flex flex-col border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-zinc dark:bg-zinc-950 shadow-lg relative">
       {editorModalActive && (
         <TrackSelectorModal
           editorModalActive={editorModalActive}
@@ -248,9 +245,9 @@ export default function AlphaTabViewer({
         </div>
       )}
 
-      <div className="flex w-full h-full">
+      <div className="flex w-full h-full overflow-hidden">
         {editorActive && (
-          <div className="w-1/2 h-full border-r border-zinc-200 dark:border-zinc-800">
+          <div className="w-full sm:w-1/2 h-full border-r border-zinc-200 dark:border-zinc-800 overflow-y-auto">
             <EditBox
               value={alphaTexContent}
               onChange={handleAlphaTexChange}
@@ -260,26 +257,28 @@ export default function AlphaTabViewer({
         )}
 
         <div
-          className={`flex flex-col h-full ${editorActive ? "w-1/2" : "w-full"}`}
+          className={`flex flex-col h-full ${editorActive ? "w-full sm:w-1/2" : "w-full"} overflow-hidden`}
         >
-          <div className="flex-shrink-0 flex max-w-7xl items-center gap-3 px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-            <PlayerControl
-              apiRef={apiRef.current}
-              isPlayerReady={isPlayerReady}
-              isPlaying={isPlaying}
-              position={position}
-              editorActive={editorActive}
-              onShowEditorModal={showEditorModal}
-              tracks={tracks}
-            />
+          <div className="flex-shrink-0 overflow-x-auto overflow-y-hidden">
+            <div className="min-w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+              <PlayerControl
+                apiRef={apiRef.current}
+                isPlayerReady={isPlayerReady}
+                isPlaying={isPlaying}
+                position={position}
+                editorActive={editorActive}
+                onShowEditorModal={showEditorModal}
+                tracks={tracks}
+              />
+            </div>
           </div>
 
           <div className="flex-1 overflow-hidden relative">
             <div
               ref={setViewportRef}
-              className="absolute inset-0 overflow-y-auto px-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-zinc-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 [&::-webkit-scrollbar-thumb]:rounded-full z-0 h-auto"
+              className="absolute inset-0 overflow-x-auto overflow-y-auto px-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-zinc-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 [&::-webkit-scrollbar-thumb]:rounded-full z-0"
             >
-              <div ref={setMainRef} />
+              <div ref={setMainRef} className="min-w-full" />
             </div>
           </div>
         </div>

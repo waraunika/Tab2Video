@@ -6,6 +6,7 @@ import { Save, Copy, Download, SquareArrowRight } from "lucide-react";
 import { AlphaTabApi } from "@coderline/alphatab";
 import * as alphaTab from '@coderline/alphatab';
 import { useTheme } from "next-themes";
+import EditorControls from "./EditorControls";
 
 interface EditBoxProps {
   value: string;
@@ -44,7 +45,6 @@ export default function EditBox({
   };
 
   const handleSave = () => {
-    // Implement save functionality
     localStorage.setItem('alphatex-draft', value);
   };
 
@@ -59,36 +59,35 @@ export default function EditBox({
   };
 
   useEffect(() => {
-      const getThemeColors = () => {
-        return resolvedTheme === "dark" ? darkTheme : lightTheme;
-      };
-  
-      const updateTheme = () => {
-        if (!apiRef) return;
-  
-        const colors = getThemeColors();
-        apiRef.settings.display.resources.staffLineColor =
-          alphaTab.model.Color.fromJson(colors.staffLineColor)!;
-        apiRef.settings.display.resources.barSeparatorColor =
-          alphaTab.model.Color.fromJson(colors.barSeparatorColor)!;
-        apiRef.settings.display.resources.mainGlyphColor =
-          alphaTab.model.Color.fromJson(colors.mainGlyphColor)!;
-        apiRef.settings.display.resources.secondaryGlyphColor =
-          alphaTab.model.Color.fromJson(colors.secondaryGlyphColor)!;
-        apiRef.settings.display.resources.scoreInfoColor =
-          alphaTab.model.Color.fromJson(colors.scoreInfoColor)!;
-        apiRef.settings.display.resources.barNumberColor =
-          alphaTab.model.Color.fromJson(colors.barNumberColor)!;
-  
-        apiRef.updateSettings();
-        apiRef.render();
-      };
-  
-      if (apiRef) {
-        if (!apiRef) return;
-        updateTheme();
-      }
-    }, [resolvedTheme, apiRef]);
+    const getThemeColors = () => {
+      return resolvedTheme === "dark" ? darkTheme : lightTheme;
+    };
+
+    const updateTheme = () => {
+      if (!apiRef) return;
+
+      const colors = getThemeColors();
+      apiRef.settings.display.resources.staffLineColor =
+        alphaTab.model.Color.fromJson(colors.staffLineColor)!;
+      apiRef.settings.display.resources.barSeparatorColor =
+        alphaTab.model.Color.fromJson(colors.barSeparatorColor)!;
+      apiRef.settings.display.resources.mainGlyphColor =
+        alphaTab.model.Color.fromJson(colors.mainGlyphColor)!;
+      apiRef.settings.display.resources.secondaryGlyphColor =
+        alphaTab.model.Color.fromJson(colors.secondaryGlyphColor)!;
+      apiRef.settings.display.resources.scoreInfoColor =
+        alphaTab.model.Color.fromJson(colors.scoreInfoColor)!;
+      apiRef.settings.display.resources.barNumberColor =
+        alphaTab.model.Color.fromJson(colors.barNumberColor)!;
+
+      apiRef.updateSettings();
+      apiRef.render();
+    };
+
+    if (apiRef) {
+      updateTheme();
+    }
+  }, [resolvedTheme, apiRef]);
 
   const handleCompile = () => {
     if (apiRef) {
@@ -99,38 +98,14 @@ export default function EditBox({
 
   return (
     <div className="h-full flex flex-col bg-zinc-50 dark:bg-zinc-900">
-      {/* Editor toolbar */}
-      <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            AlphaTeX Editor
-          </span>
-          <select 
-            value={fontSize}
-            onChange={(e) => setFontSize(Number(e.target.value))}
-            className="text-xs bg-transparent border border-zinc-200 dark:border-zinc-700 rounded px-2 py-1"
-          >
-            <option value={12}>12px</option>
-            <option value={14}>14px</option>
-            <option value={16}>16px</option>
-            <option value={18}>18px</option>
-          </select>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={handleCopy}>
-            <Copy className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleSave}>
-            <Save className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleDownload}>
-            <Download className="h-4 w-4" />
-          </Button>
-          <Button variant={"secondary"} size="sm" onClick={handleCompile}>
-            <SquareArrowRight />
-          </Button>
-        </div>
-      </div>
+      <EditorControls
+        fontSize={fontSize}
+        setFontSize={setFontSize}
+        handleCopy={handleCopy}
+        handleSave={handleSave}
+        handleDownload={handleDownload}
+        handleCompile={handleCompile}
+      />
 
       {/* Editor area */}
       <div className="flex-1 overflow-hidden p-4">
