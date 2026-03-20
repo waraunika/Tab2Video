@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isUserAdmin } from "@/lib/supabase/admin-check";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
+<<<<<<< HEAD
 import { redirect } from "next/navigation";
 
 // import { FetchDataSteps } from "@/components/tutorial/fetch-data-steps";
@@ -17,6 +18,8 @@ async function UserDetails() {
 
   return JSON.stringify(data.claims, null, 2);
 }
+=======
+>>>>>>> ad4abaa04b6249fb166fcd963e68051128c836e6
 
 export default async function ProtectedPage() {
   const supabase = await createClient();
@@ -27,16 +30,7 @@ export default async function ProtectedPage() {
   return (
     <div className="flex-1 w-full flex flex-col gap-12">
       <div className="w-full">
-        <div className="bg-accent text-sm p-3 px-5 rounded-md text-foreground flex gap-3 items-center">
-          <div className="flex items-center gap-2">
-            <span className="font-mono">Logged in as:</span>
-            <span className="font-bold">{user?.email}</span>
-            {isAdmin && (
-              <span className="bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded text-xs font-bold">
-                ADMIN
-              </span>
-            )}
-          </div>
+        <div className="text-sm p-3 px-5 rounded-md text-foreground flex gap-3 items-center">
 
           <div className="flex gap-2">
             {isAdmin && (
@@ -52,19 +46,7 @@ export default async function ProtectedPage() {
         <h1 className="text-3xl font-bold">Your Dashboard</h1>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Link href='/tabs/new' className="block">
-            <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
-              <h2 className="text-xl font-semibold mb-2">
-                Create New Tab
-              </h2>
-
-              <p className="text-muted-foreground">
-                Create a new tab from scratch
-              </p>
-            </div>
-          </Link>
-
-          <Link href='/tabs/upload' className="block">
+          <Link href='/upload-tab' className="block">
             <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
               <h2 className="text-xl font-semibold mb-2">
                 Upload New Tab
@@ -143,6 +125,7 @@ export default async function ProtectedPage() {
           )}
         </div>
       </div>
+<<<<<<< HEAD
 
       <div className="flex flex-col gap-2 items-start">
         <h2 className="font-bold text-2xl mb-4">Your user details</h2>
@@ -156,6 +139,8 @@ export default async function ProtectedPage() {
         <h2 className="font-bold text-2xl mb-4">Next steps</h2>
         {/* <FetchDataSteps /> */}
       </div>
+=======
+>>>>>>> ad4abaa04b6249fb166fcd963e68051128c836e6
     </div>
   );
 }

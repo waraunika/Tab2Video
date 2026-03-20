@@ -10,8 +10,19 @@ export async function AuthButton() {
 
   const user = data?.claims;
 
+  function getUserCredits() {
+    if (user) {
+      if (user.user_metadata) {
+        if (user.user_metadata.display_name) {
+          return user.user_metadata.display_name;
+        }
+     }
+     return user.email;
+    }
+  }
+
   return user ? (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4 justify-between w-full">
       <div>
         <Link href="/dashboard">
           Go to Dashboard
@@ -19,7 +30,7 @@ export async function AuthButton() {
       </div>
 
       <div>
-        Good to see you, {user.email}!{" "}
+        Good to see you, {getUserCredits()}!{" "}
         <LogoutButton />
       </div>
     </div>

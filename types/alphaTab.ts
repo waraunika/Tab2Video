@@ -1,10 +1,14 @@
+import * as alphaTab from '@coderline/alphatab'
+
 export interface AlphaTabApi {
   playPause: () => void;
   stop: () => void;
   print: () => void;
   render: () => void;
+  renderTracks: (track: alphaTab.model.Track[]) => void;
   updateSettings: () => void;
   destroy: () => void;
+  tex: (texString: string) => void;
   countInVolume: number;
   metronomeVolume: number;
   isLooping: boolean;
@@ -12,6 +16,12 @@ export interface AlphaTabApi {
     display: {
       scale: number;
       layoutMode: number;
+      resources: {
+        barNumberColor?: string;
+      }
     };
   };
+  exporter: {
+    AlphaTexExporter: () => void;
+  }
 }

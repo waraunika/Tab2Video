@@ -5,6 +5,7 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
+    --secondary-background: 0 0% 90%
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
@@ -29,9 +30,12 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+
+    --at-cursor-bar: rgba(178, 181, 224, 0.15);
   }
   .dark {
     --background: 0 0% 3.9%;
+    --secondary-background: 0 0% 2%
     --foreground: 0 0% 98%;
     --card: 0 0% 3.9%;
     --card-foreground: 0 0% 98%;
@@ -55,6 +59,8 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+
+    --at-cursor-bar: rgba(171, 165, 165, 0.15);
   }
 }
 
@@ -69,22 +75,28 @@
 
 
 .at-cursor-bar {
-  background: rgba(255, 215, 0, 0.15);
+  background: var(--at-cursor-bar);
   pointer-events: none;
+  border-radius: 5px;
+  margin-top: 5px;
+  z-index: 10;
 }
 
 .at-selection div {
   background: rgba(64, 120, 255, 0.08);
   pointer-events: none;
+  z-index: 10;
 }
 
 .at-cursor-beat {
   background: rgba(64, 120, 255, 0.5);
   width: 3px;
   pointer-events: none;
+  z-index: 10;
 }
 
 .at-highlight * {
   fill: #4078ff;
   stroke: #4078ff;
+  z-index: 10;
 }
