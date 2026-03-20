@@ -262,7 +262,7 @@ export default function AlphaTabViewer({
         <div
           className={`flex flex-col h-full ${editorActive ? "w-1/2" : "w-full"}`}
         >
-          <div className="flex-shrink-0 flex items-center gap-3 px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex-shrink-0 flex max-w-7xl items-center gap-3 px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
             <PlayerControl
               apiRef={apiRef.current}
               isPlayerReady={isPlayerReady}
