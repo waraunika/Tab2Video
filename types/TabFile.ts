@@ -20,3 +20,17 @@ export interface TabFile {
   };
   storage_path: string;
 }
+
+export interface TabFileData {
+  title: string;
+  artist: string;
+  album: string;
+  is_public: boolean;
+}
+
+export interface TabUploadResponse {
+  fileUrl: string;
+  fileName: string;
+  storagePath: string;
+  message: string;
+}

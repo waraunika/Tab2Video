@@ -1,51 +1,60 @@
-'use client';
+"use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
+import { TabFileData, TabUploadResponse } from "@/types/TabFile";
 
-interface UseUploaadFileReturn {
+interface UseUploadFileReturn {
   fileUrl: string | null;
   fileName: string | null;
+  storagePath: string | null;
   isUploading: boolean;
   error: string | null;
-  uploadTabFile: (file: File) => Promise<void>;
+  uploadTabFile: (file: File, fileData: TabFileData) => Promise<void>;
 }
 
-export function useUploadFile(): UseUploaadFileReturn {
+export function useUploadFile(): UseUploadFileReturn {
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [storagePath, setStoragePath] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fileNameRef = useRef<string | null>(null);
-  fileNameRef.current = fileName;
+  const uploadTabFile = useCallback(
+    async (file: File, fileData: TabFileData) => {
+      setIsUploading(true);
+      setError(null);
 
-  const uploadTabFile = useCallback(async (file: File) => {
-    setIsUploading(true);
-    setError(null);
+      try {
+        if (file) {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("fileData", JSON.stringify(fileData));
 
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
+          const res = await fetch("/api/tabs/upload", {
+            method: "POST",
+            body: formData,
+          });
 
-      const res = await fetch('/api/tabs/upload', {
-        method: "POST",
-        body: formData,
-      });
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error ?? "Upload Failed");
+          }
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Upload Failed");
+          const { fileUrl, fileName, storagePath }: TabUploadResponse =
+            await res.json();
+          setFileUrl(fileUrl);
+          setFileName(fileName);
+          setStoragePath(storagePath);
+        }
+      } catch (error) {
+        setError("Unknown error");
+        console.log(error);
+      } finally {
+        setIsUploading(false);
       }
+    },
+    [],
+  );
 
-      const { fileUrl, fileName } = await res.json();
-      setFileUrl(fileUrl);
-      setFileName(fileName);
-    } catch (error) {
-      setError(error + "Unknown error");
-    } finally {
-      setIsUploading(false);
-    }
-  }, []);
-
-  return { fileUrl, fileName, isUploading, error, uploadTabFile};
+  return { fileUrl, fileName, storagePath, isUploading, error, uploadTabFile };
 }

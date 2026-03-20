@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isUserAdmin } from "@/lib/supabase/admin-check";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
+import SearchTabs from "@/components/dashboard/SearchTab";
 
 export default async function ProtectedPage() {
   const supabase = await createClient();
@@ -26,6 +27,8 @@ export default async function ProtectedPage() {
 
       <div className="flex flex-col gap-6">
         <h1 className="text-3xl font-bold">Your Dashboard</h1>
+
+        <SearchTabs />
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Link href='/upload-tab' className="block">
