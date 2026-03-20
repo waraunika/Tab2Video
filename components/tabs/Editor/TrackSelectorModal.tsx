@@ -68,7 +68,7 @@ export default function TrackSelectorModal({
           <div className="space-y-2">
             {guitarTracks.map((track) => (
               <div
-                key={track.name}
+                key={track.index}
                 className="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-blue-500 dark:hover:border-blue-400 transition-colors cursor-pointer"
                 onClick={() => handleSelect(track.index)}
               >

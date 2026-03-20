@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
     try {
       fileData = JSON.parse(fileDataString) as TabFileData;
     } catch (parseError) {
+      console.log(parseError);
       return NextResponse.json(
         { error: "Invald file format" },
         { status: 400 },
