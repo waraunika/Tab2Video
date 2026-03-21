@@ -2,6 +2,12 @@ import { Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description: "Welcome to your Home Page",
+};
 
 export default async function DashboardLayout({
   children,
