@@ -1,5 +1,7 @@
 import Modal from "@/components/ui/modal";
+import parser from "@/lib/parser/rawToSelected";
 import * as alphaTab from "@coderline/alphatab";
+import { parse } from "path";
 import { useMemo } from "react";
 
 interface TrackSelectorModalProps {
@@ -40,10 +42,11 @@ export default function TrackSelectorModal({
       console.log("no api ref");
       return;
     }
-
+    const trackName = guitarTracks[index].name;
     const exporter = new alphaTab.exporter.AlphaTexExporter();
-    const alphaTex = exporter.exportToString(apiRef.score);
-    onTexUpdate(alphaTex);
+    const alphaTex = exporter.exportToString(apiRef.score);    
+    const parseText = parser(alphaTex,trackName);
+    onTexUpdate(parseText);
 
 
     onTrackSelect(tracks[index]);
