@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { X } from "lucide-react";
 
 export function LoginForm({
   className,
@@ -47,8 +48,16 @@ export function LoginForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-6 relative", className)} {...props}>
       <Card>
+         {/* Close button positioned at top-right */}
+      <Link 
+        href="/" 
+        className="absolute top-5 right-5 p-2 hover:bg-gray-100 rounded-full transition-colors"
+        aria-label="Close and go to home"
+      >
+        <X />
+      </Link>
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>

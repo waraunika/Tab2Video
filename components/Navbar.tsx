@@ -4,13 +4,18 @@ import { AuthButton } from "./auth-button";
 import { ThemeSwitcher } from "./theme-switcher";
 import { hasEnvVars } from "@/lib/utils";
 import Logo from "./logo";
+import Link from "next/link";
 
 export default function Navbar() {
   return (
     <nav className="w-full flex justify-center border-b border-b-foreground/10 h-20">
       <div className="w-full flex justify-between items-center p-3 px-5 text-sm">
         {/* Left side - warning */}
-        <Logo />
+        <Link
+          href="/"
+        >
+          <Logo />
+        </Link>
 
         {!hasEnvVars ? <EnvVarWarning /> : null}
 

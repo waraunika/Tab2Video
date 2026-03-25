@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Welcome to your Home Page",
 };
 
-export default async function DashboardLayout({
+export default async function ViewTabLayout({
   children,
 }: {
   children: React.ReactNode;

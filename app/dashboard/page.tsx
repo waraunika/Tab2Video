@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import SearchTabs from "@/components/dashboard/SearchTab";
 
-export default async function ProtectedPage() {
+export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -18,7 +18,9 @@ export default async function ProtectedPage() {
           <div className="flex gap-2">
             {isAdmin && (
               <Link href='/admin'>
-                <Button variant='outline' size='sm'>Admin Dashboard</Button>
+                <Button variant='outline' size='sm'>
+                  Admin Dashboard
+                </Button>
               </Link>
             )}
           </div>
@@ -26,7 +28,9 @@ export default async function ProtectedPage() {
       </div>
 
       <div className="flex flex-col gap-6">
-        <h1 className="text-3xl font-bold">Your Dashboard</h1>
+        <h1 className="text-3xl font-bold">
+          Your Dashboard
+        </h1>
 
         <SearchTabs />
 

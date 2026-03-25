@@ -98,7 +98,9 @@ export default function Home() {
           </div>
 
           <div className="bg-card rounded-xl border border-border shadow-lg overflow-hidden">
-            <AlphaTabViewer />
+            <AlphaTabViewer
+              editorModeAvailable={true}
+            />
           </div>
         </section>
 

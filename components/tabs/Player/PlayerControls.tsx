@@ -1,11 +1,20 @@
-'use client'
+"use client";
 
-import { Hourglass, Metronome, Pause, Pencil, Play, Printer, Repeat, StepBack } from "lucide-react";
+import {
+  Hourglass,
+  Metronome,
+  Pause,
+  Pencil,
+  Play,
+  Printer,
+  Repeat,
+  StepBack,
+} from "lucide-react";
 import { useState } from "react";
 import ZoomControl from "../UI/ZoomControl";
 import LayoutControl from "../UI/LayoutControl";
 import { AlphaTabApi } from "@coderline/alphatab";
-import * as alphaTab from '@coderline/alphatab'
+import * as alphaTab from "@coderline/alphatab";
 import { Button } from "@/components/ui/button";
 import TrackSelector from "./TrackSelector";
 
@@ -22,6 +31,7 @@ interface PlayerControlProps {
   tracks: alphaTab.model.Track[] | null;
   editorActive: boolean;
   onShowEditorModal: () => void;
+  editorShow: boolean;
 }
 
 export default function PlayerControl({
@@ -31,7 +41,8 @@ export default function PlayerControl({
   position,
   tracks,
   editorActive,
-  onShowEditorModal
+  onShowEditorModal,
+  editorShow,
 }: PlayerControlProps) {
   const [countInActive, setCountInActive] = useState(false);
   const [metronomeActive, setMetronomeActive] = useState(false);
@@ -74,49 +85,54 @@ export default function PlayerControl({
   }
 
   return (
-    <div className="flex items-center justify-between w-full">
+    <div className="flex items-center justify-between w-full gap-2 overflow-x-auto overflow-y-hidden">
       {/* Far left: Playback controls */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 flex-shrink-0">
         <Button
           onClick={stop}
           disabled={!isPlayerReady}
           title="Stop / Reset"
           variant={"secondary"}
+          size="sm"
+          className="h-8 w-8 p-0"
         >
-          <StepBack size={18} />
+          <StepBack size={16} />
         </Button>
 
-        <TrackSelector
-          tracks={tracks}
-          apiRef={apiRef}
-        />
+        <div className="flex-shrink-0">
+          <TrackSelector tracks={tracks} apiRef={apiRef} />
+        </div>
 
         <Button
           onClick={togglePlay}
           disabled={!isPlayerReady}
           title={isPlaying ? "Pause" : "Play"}
           variant={isPlaying ? "secondary" : "outline"}
+          size="sm"
+          className="h-8 w-8 p-0 flex-shrink-0"
         >
-          {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+          {isPlaying ? <Pause size={16} /> : <Play size={16} />}
         </Button>
       </div>
 
       {/* Time display */}
-      <div className="flex items-center">
-        <span className="text-sm font-mono px-3 py-1.5 rounded-md border">
+      <div className="flex items-center flex-shrink-0">
+        <span className="text-sm font-mono px-3 py-1.5 rounded-md border whitespace-nowrap">
           {position.current} / {position.total}
         </span>
       </div>
 
-      {/* Slight right of center: Settings controls */}
-      <div className="flex items-center gap-2">
+      {/* Settings controls */}
+      <div className="flex items-center gap-1 flex-shrink-0">
         <Button
           onClick={toggleCountIn}
           disabled={!isPlayerReady}
           title="Count-in"
           variant={"secondary"}
+          size="sm"
+          className={`h-8 w-8 p-0 ${countInActive ? "scale-110" : ""}`}
         >
-          <Hourglass size={18} className={`${countInActive ? 'scale-110' : ''}`} />
+          <Hourglass size={16} />
         </Button>
 
         <Button
@@ -124,8 +140,10 @@ export default function PlayerControl({
           disabled={!isPlayerReady}
           title="Metronome"
           variant={"secondary"}
+          size="sm"
+          className={`h-8 w-8 p-0 ${metronomeActive ? "scale-110" : ""}`}
         >
-          <Metronome size={18} className={`${metronomeActive ? 'scale-110' : ''}`} />
+          <Metronome size={16} />
         </Button>
 
         <Button
@@ -133,34 +151,41 @@ export default function PlayerControl({
           disabled={!isPlayerReady}
           title="Loop"
           variant={"secondary"}
+          size="sm"
+          className={`h-8 w-8 p-0 ${loopActive ? "scale-110" : ""}`}
         >
-          <Repeat size={18} className={`${loopActive ? 'scale-110' : ''}`} />
+          <Repeat size={16} />
         </Button>
       </div>
 
-      {/* Far right: Utilities */}
-      <div className="flex items-center gap-2">
+      {/* Utilities */}
+      <div className="flex items-center gap-1 flex-shrink-0">
         <Button
           onClick={() => apiRef?.print()}
           disabled={!isPlayerReady}
           title="Print"
           variant={"secondary"}
+          size="sm"
+          className="h-8 w-8 p-0"
         >
-          <Printer size={18} />
+          <Printer size={16} />
         </Button>
 
-        <Button
-          onClick={onShowEditorModal}
-          disabled={!isPlayerReady}
-          title="Edit"
-          variant={"secondary"}
-          className={`${editorActive ? 'bg-zinc-500' : ''}`}
-        >
-          <Pencil size={18} />
-        </Button>
+        {editorShow && (
+          <Button
+            onClick={onShowEditorModal}
+            disabled={!isPlayerReady}
+            title="Edit"
+            variant={"secondary"}
+            size="sm"
+            className={`h-8 w-8 p-0 ${editorActive ? "bg-zinc-500" : ""}`}
+          >
+            <Pencil size={16} />
+          </Button>
+        )}
 
         <ZoomControl apiRef={apiRef} />
-        <LayoutControl apiRef={apiRef}/>
+        <LayoutControl apiRef={apiRef} />
       </div>
     </div>
   );

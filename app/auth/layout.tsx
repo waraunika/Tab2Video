@@ -1,5 +1,11 @@
 import { redirect } from 'next/navigation'
 import { createClient } from "@/lib/supabase/server";
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "Auth",
+  description: "Authorizing you in our system"
+}
 
 export default async function AuthLayout({
   children,

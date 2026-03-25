@@ -129,6 +129,7 @@ export default function UploadTabs() {
             <AlphaTabViewer
               fileUrl={fileUrl}
               fileName={currentFileName ?? undefined}
+              editorModeAvailable={true}
             />
           </div>
 

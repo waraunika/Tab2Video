@@ -93,12 +93,6 @@ const Modal = ({
         <div className="flex-1 overflow-y-auto p-6">
           {children}
         </div>
-
-        {/* Optional footer slot - you can add this if needed */}
-        {/* <div className="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button>Confirm</Button>
-        </div> */}
       </div>
     </div>
   );

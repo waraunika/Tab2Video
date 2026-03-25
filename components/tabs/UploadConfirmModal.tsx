@@ -103,6 +103,7 @@ export default function UploadConfirmModal({
               <Music className="h-4 w-4" />
               Title <span className="text-destructive">*</span>
             </Label>
+            
             <Input
               id="title"
               value={fileData.title}
