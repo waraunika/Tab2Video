@@ -27,13 +27,15 @@ import { useRouter } from "next/navigation";
 interface SearchTabsProps {
   onTabSelect?: (tab: Tab) => void;
   className?: string;
+  userId?: string; 
 }
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 12;
 
 export default function SearchTabs({
   onTabSelect,
   className,
+  userId,
 }: SearchTabsProps) {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,53 +68,63 @@ export default function SearchTabs({
   };
 
   useEffect(() => {
-    const fetchTabs = async () => {
-      setLoading(true);
-      try {
-        let query = supabase
-          .from("tabs")
-          .select(
-            `
+  const fetchTabs = async () => {
+    setLoading(true);
+    try {
+      // Start with base query
+      let query = supabase
+        .from("tabs")
+        .select(
+          `
           *,
           profiles:created_by (
             display_name
           )
         `,
-            { count: "exact" },
-          )
-          .eq("is_public", true)
-          .order("created_at", { ascending: false })
-          .range(
-            (currentPage - 1) * ITEMS_PER_PAGE,
-            currentPage * ITEMS_PER_PAGE - 1,
-          );
+          { count: "exact" },
+        )
+        .order("created_at", { ascending: false })
+        .range(
+          (currentPage - 1) * ITEMS_PER_PAGE,
+          currentPage * ITEMS_PER_PAGE - 1,
+        );
 
-        if (debouncedSearch) {
-          query = query.or(
-            `title.ilike.%${debouncedSearch}%,` +
-              `artist.ilike.%${debouncedSearch}%,` +
-              `album.ilike.%${debouncedSearch}%`,
-          );
-        }
-
-        const { data, error, count } = await query;
-
-        if (error) {
-          console.error("Error fetching tabs: ", error);
-          return;
-        }
-        setTabs(data || []);
-        setTotalCount(count || 0);
-        setTotalPages(Math.ceil((count || 0) / ITEMS_PER_PAGE));
-      } catch (error) {
-        console.error("Unexpected error: ", error);
-      } finally {
-        setLoading(false);
+      // Apply filters based on mode
+      if (userId) {
+        // User mode: show all tabs uploaded by this user (public + private)
+        query = query.eq("created_by", userId);
+      } else {
+        // Public mode: only public tabs
+        query = query.eq("is_public", true);
       }
-    };
 
-    fetchTabs();
-  }, [debouncedSearch, currentPage, supabase]);
+      // Apply search filter if present
+      if (debouncedSearch) {
+        query = query.or(
+          `title.ilike.%${debouncedSearch}%,` +
+            `artist.ilike.%${debouncedSearch}%,` +
+            `album.ilike.%${debouncedSearch}%`,
+        );
+      }
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        console.error("Error fetching tabs: ", error);
+        return;
+      }
+      setTabs(data || []);
+      setTotalCount(count || 0);
+      setTotalPages(Math.ceil((count || 0) / ITEMS_PER_PAGE));
+    } catch (error) {
+      console.error("Unexpected error: ", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchTabs();
+}, [debouncedSearch, currentPage, supabase, userId]); 
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);

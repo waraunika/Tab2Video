@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     } catch (parseError) {
       console.log(parseError);
       return NextResponse.json(
-        { error: "Invald file format" },
+        { error: "Invalid file format" },
         { status: 400 },
       );
     }
