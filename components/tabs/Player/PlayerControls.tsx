@@ -1,11 +1,20 @@
-'use client'
+"use client";
 
-import { Hourglass, Metronome, Pause, Pencil, Play, Printer, Repeat, StepBack } from "lucide-react";
+import {
+  Hourglass,
+  Metronome,
+  Pause,
+  Pencil,
+  Play,
+  Printer,
+  Repeat,
+  StepBack,
+} from "lucide-react";
 import { useState } from "react";
 import ZoomControl from "../UI/ZoomControl";
 import LayoutControl from "../UI/LayoutControl";
 import { AlphaTabApi } from "@coderline/alphatab";
-import * as alphaTab from '@coderline/alphatab'
+import * as alphaTab from "@coderline/alphatab";
 import { Button } from "@/components/ui/button";
 import TrackSelector from "./TrackSelector";
 
@@ -22,6 +31,7 @@ interface PlayerControlProps {
   tracks: alphaTab.model.Track[] | null;
   editorActive: boolean;
   onShowEditorModal: () => void;
+  editorShow: boolean;
 }
 
 export default function PlayerControl({
@@ -31,7 +41,8 @@ export default function PlayerControl({
   position,
   tracks,
   editorActive,
-  onShowEditorModal
+  onShowEditorModal,
+  editorShow,
 }: PlayerControlProps) {
   const [countInActive, setCountInActive] = useState(false);
   const [metronomeActive, setMetronomeActive] = useState(false);
@@ -89,10 +100,7 @@ export default function PlayerControl({
         </Button>
 
         <div className="flex-shrink-0">
-          <TrackSelector
-            tracks={tracks}
-            apiRef={apiRef}
-          />
+          <TrackSelector tracks={tracks} apiRef={apiRef} />
         </div>
 
         <Button
@@ -122,7 +130,7 @@ export default function PlayerControl({
           title="Count-in"
           variant={"secondary"}
           size="sm"
-          className={`h-8 w-8 p-0 ${countInActive ? 'scale-110' : ''}`}
+          className={`h-8 w-8 p-0 ${countInActive ? "scale-110" : ""}`}
         >
           <Hourglass size={16} />
         </Button>
@@ -133,7 +141,7 @@ export default function PlayerControl({
           title="Metronome"
           variant={"secondary"}
           size="sm"
-          className={`h-8 w-8 p-0 ${metronomeActive ? 'scale-110' : ''}`}
+          className={`h-8 w-8 p-0 ${metronomeActive ? "scale-110" : ""}`}
         >
           <Metronome size={16} />
         </Button>
@@ -144,7 +152,7 @@ export default function PlayerControl({
           title="Loop"
           variant={"secondary"}
           size="sm"
-          className={`h-8 w-8 p-0 ${loopActive ? 'scale-110' : ''}`}
+          className={`h-8 w-8 p-0 ${loopActive ? "scale-110" : ""}`}
         >
           <Repeat size={16} />
         </Button>
@@ -163,19 +171,21 @@ export default function PlayerControl({
           <Printer size={16} />
         </Button>
 
-        <Button
-          onClick={onShowEditorModal}
-          disabled={!isPlayerReady}
-          title="Edit"
-          variant={"secondary"}
-          size="sm"
-          className={`h-8 w-8 p-0 ${editorActive ? 'bg-zinc-500' : ''}`}
-        >
-          <Pencil size={16} />
-        </Button>
+        {editorShow && (
+          <Button
+            onClick={onShowEditorModal}
+            disabled={!isPlayerReady}
+            title="Edit"
+            variant={"secondary"}
+            size="sm"
+            className={`h-8 w-8 p-0 ${editorActive ? "bg-zinc-500" : ""}`}
+          >
+            <Pencil size={16} />
+          </Button>
+        )}
 
         <ZoomControl apiRef={apiRef} />
-        <LayoutControl apiRef={apiRef}/>
+        <LayoutControl apiRef={apiRef} />
       </div>
     </div>
   );

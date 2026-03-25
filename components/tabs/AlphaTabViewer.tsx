@@ -37,6 +37,7 @@ interface AlphaTabViewerProps {
   onScoreLoaded?: (score: alphaTab.model.Track) => void;
   onApiReady?: (api: AlphaTabApi) => void;
   showOnlyFirstTrack?: boolean;
+  editorModeAvailable: boolean;
 }
 
 export default function AlphaTabViewer({
@@ -45,6 +46,7 @@ export default function AlphaTabViewer({
   showOnlyFirstTrack = true,
   onScoreLoaded,
   onApiReady,
+  editorModeAvailable = true
 }: AlphaTabViewerProps) {
   const { resolvedTheme } = useTheme();
 
@@ -216,8 +218,12 @@ export default function AlphaTabViewer({
     setAlphaTexContent(newContent);
   }
 
-  function handleEditTrackSelect() {
+  function handleTrackSelectorModalClose() {
     setEditorModalActive(false);
+  }
+
+  function handleTrackSelect(track: alphaTab.model.Track) {
+    setEditTrack(track)
     setEditorActive(true);
   }
 
@@ -226,8 +232,8 @@ export default function AlphaTabViewer({
       {editorModalActive && (
         <TrackSelectorModal
           editorModalActive={editorModalActive}
-          onClose={handleEditTrackSelect}
-          onTrackSelect={setEditTrack}
+          onClose={handleTrackSelectorModalClose}
+          onTrackSelect={handleTrackSelect}
           tracks={tracks}
           apiRef={apiRef.current}
           onTexUpdate={setAlphaTexContent}
@@ -269,6 +275,7 @@ export default function AlphaTabViewer({
                 editorActive={editorActive}
                 onShowEditorModal={showEditorModal}
                 tracks={tracks}
+                editorShow={editorModeAvailable}
               />
             </div>
           </div>

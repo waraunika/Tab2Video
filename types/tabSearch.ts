@@ -8,4 +8,5 @@ export default interface Tab {
   profiles?: {
     display_name: string;
   };
+  file_path?: string;
 }

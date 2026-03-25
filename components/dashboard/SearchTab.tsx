@@ -1,6 +1,13 @@
 "use client";
 
-import { Album, ChevronLeft, Music, Search, User } from "lucide-react";
+import {
+  Album,
+  ChevronLeft,
+  ChevronRight,
+  Music,
+  Search,
+  User,
+} from "lucide-react";
 import { Input } from "../ui/input";
 import Tab from "@/types/tabSearch";
 import { useEffect, useState } from "react";
@@ -15,6 +22,7 @@ import {
 } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
+import { useRouter } from "next/navigation";
 
 interface SearchTabsProps {
   onTabSelect?: (tab: Tab) => void;
@@ -37,55 +45,74 @@ export default function SearchTabs({
   const supabase = createClient();
   const debouncedSearch = useDebounce(searchQuery, 500);
 
-  useEffect(() => {
-    fetchTabs();
-  }, [debouncedSearch, currentPage]);
+  const router = useRouter();
 
-  const fetchTabs = async () => {
-    setLoading(true);
-    try {
-      let query = supabase
-        .from("tabs")
-        .select(
-          `
+  const handleTabClick = async (tab: Tab) => {
+    if (tab.file_path) {
+      const { data, error } = await supabase.storage
+        .from("user-tabs")
+        .createSignedUrl(tab.file_path, 3600);
+
+      if (error || !data?.signedUrl) {
+        console.error("Failed to get signed URL", error);
+        return;
+      }
+
+      const encoded = encodeURIComponent(data.signedUrl);
+      router.push(
+        `/view-tab?url=${encoded}&title=${encodeURIComponent(tab.title)}`,
+      );
+    }
+  };
+
+  useEffect(() => {
+    const fetchTabs = async () => {
+      setLoading(true);
+      try {
+        let query = supabase
+          .from("tabs")
+          .select(
+            `
           *,
           profiles:created_by (
             display_name
           )
         `,
-          { count: "exact" },
-        )
-        .eq("is_public", true)
-        .order("created_at", { ascending: false })
-        .range(
-          (currentPage - 1) * ITEMS_PER_PAGE,
-          currentPage * ITEMS_PER_PAGE - 1,
-        );
+            { count: "exact" },
+          )
+          .eq("is_public", true)
+          .order("created_at", { ascending: false })
+          .range(
+            (currentPage - 1) * ITEMS_PER_PAGE,
+            currentPage * ITEMS_PER_PAGE - 1,
+          );
 
-      if (debouncedSearch) {
-        query = query.or(
-          `title.ilike.%${debouncedSearch}%,` +
-            `artist.ilike.%${debouncedSearch}%,` +
-            `album.ilike.%${debouncedSearch}%`,
-        );
+        if (debouncedSearch) {
+          query = query.or(
+            `title.ilike.%${debouncedSearch}%,` +
+              `artist.ilike.%${debouncedSearch}%,` +
+              `album.ilike.%${debouncedSearch}%`,
+          );
+        }
+
+        const { data, error, count } = await query;
+
+        if (error) {
+          console.error("Error fetching tabs: ", error);
+          return;
+        }
+        setTabs(data || []);
+        setTotalCount(count || 0);
+        setTotalPages(Math.ceil((count || 0) / ITEMS_PER_PAGE));
+      } catch (error) {
+        console.error("Unexpected error: ", error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const { data, error, count } = await query;
-
-      if (error) {
-        console.error("Error fetching tabs: ", error);
-        return;
-      }
-
-      setTabs(data || []);
-      setTotalCount(count || 0);
-      setTotalPages(Math.ceil((count || 0) / ITEMS_PER_PAGE));
-    } catch (error) {
-      console.error("Unexpected error: ", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchTabs();
+  }, [debouncedSearch, currentPage, supabase]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -160,23 +187,28 @@ export default function SearchTabs({
             <Card
               key={tab.id}
               className="hover:shadow-lg transition-shadow cursor-pointer fade-in"
-              onClick={() => onTabSelect?.(tab)}
+              onClick={() => handleTabClick(tab)}
             >
               <CardHeader>
                 <CardTitle className="line-clamp-1">
-                  {tab.title}
+                  <div className="flex">
+                    <Music className="h-4 w-4" />
+                    &nbsp;
+                    {tab.title}
+                  </div>
                 </CardTitle>
 
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <p>Uploaded by</p>
-                  <User className="h-3 w-3" />
-                  <span className="line-clamp-1">{getDisplayName(tab)}</span>
+                  <span className="line-clamp-1">
+                    <i>{getDisplayName(tab)}</i>
+                  </span>
                 </div>
               </CardHeader>
 
               <CardContent className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
-                  <Music className="h-3 w-3 text-muted-foreground shrink-0" />
+                  <User className="h-3 w-3 text-muted-foreground shrink-0" />
                   <span className="line-clamp-1">{tab.artist}</span>
                 </div>
 
@@ -236,7 +268,7 @@ export default function SearchTabs({
               onClick={handleNextPage}
               disabled={currentPage === totalPages || loading}
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />
+              <ChevronRight className="h-4 w-4 mr-1" />
               Next
             </Button>
           </div>

@@ -24,8 +24,8 @@ export default function TrackSelectorModal({
   // Use useMemo to filter tracks only when tracks array changes
   const guitarTracks = useMemo(() => {
     if (!tracks || tracks.length === 0) return [];
-    
-    return tracks.filter(track => {
+
+    return tracks.filter((track) => {
       const program = track.playbackInfo.program;
       return (program >= 25 && program <= 32) || program === 121;
     });
@@ -35,7 +35,7 @@ export default function TrackSelectorModal({
     if (!tracks) return;
 
     if (!apiRef) {
-      console.log('no ref');
+      console.log("no ref");
       return;
     }
     if (!apiRef.score) {
@@ -44,10 +44,9 @@ export default function TrackSelectorModal({
     }
     const trackName = guitarTracks[index].name;
     const exporter = new alphaTab.exporter.AlphaTexExporter();
-    const alphaTex = exporter.exportToString(apiRef.score);    
-    const parseText = parser(alphaTex,trackName);
+    const alphaTex = exporter.exportToString(apiRef.score);
+    const parseText = parser(alphaTex, trackName);
     onTexUpdate(parseText);
-
 
     onTrackSelect(tracks[index]);
     console.log("set edit track to ", index);
@@ -61,10 +60,20 @@ export default function TrackSelectorModal({
       onClose={onClose}
     >
       <div className="space-y-2">
+        <div>
+          <h1>
+            Warning!
+          </h1>
+
+          <p>
+            Editing this file may not be for you if you know how tablature system works. Also, we use AlphaTex, the syntax are simple, but be aware of what you are doing!
+          </p>
+        </div>
+
         <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
           These are the available guitar tracks:
         </p>
-        
+
         {guitarTracks.length === 0 ? (
           <p className="text-sm text-zinc-500">No guitar tracks found</p>
         ) : (
