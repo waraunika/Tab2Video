@@ -36,6 +36,7 @@ interface AlphaTabViewerProps {
   fileName?: string;
   onScoreLoaded?: (score: alphaTab.model.Track) => void;
   onApiReady?: (api: AlphaTabApi) => void;
+  onContentChange?: (content: string) => void;
   showOnlyFirstTrack?: boolean;
   editorModeAvailable: boolean;
 }
@@ -46,7 +47,8 @@ export default function AlphaTabViewer({
   showOnlyFirstTrack = true,
   onScoreLoaded,
   onApiReady,
-  editorModeAvailable = true
+  onContentChange,
+  editorModeAvailable = true,
 }: AlphaTabViewerProps) {
   const { resolvedTheme } = useTheme();
 
@@ -84,7 +86,11 @@ export default function AlphaTabViewer({
     viewportRef.current = node;
     if (node && mainRef.current) setRefsReady(true);
   }, []);
-
+  useEffect(() => {
+    if (onContentChange && alphaTexContent) {
+      onContentChange(alphaTexContent);
+    }
+  }, [alphaTexContent, onContentChange]);
   useEffect(() => {
     if (!refsReady) return;
     if (!apiRef.current || !isPlayerReady) return;
@@ -142,8 +148,10 @@ export default function AlphaTabViewer({
       const initialFile = editorActive ? null : (fileUrl ?? DEFAULT_TAB_URL);
       const settings = new alphaTab.Settings();
       settings.core.file = initialFile;
-      settings.core.scriptFile = "https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/alphaTab.js";
-      settings.core.fontDirectory = "https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/font/";
+      settings.core.scriptFile =
+        "https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/alphaTab.js";
+      settings.core.fontDirectory =
+        "https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/font/";
       settings.player.playerMode = alphaTab.PlayerMode.EnabledAutomatic;
       settings.player.soundFont = SOUNDFONT_URL;
       settings.player.scrollElement = viewportRef.current!;
@@ -154,7 +162,8 @@ export default function AlphaTabViewer({
       settings.display.resources.staffLineColor = colors.staffLineColor;
       settings.display.resources.barSeparatorColor = colors.barSeparatorColor;
       settings.display.resources.mainGlyphColor = colors.mainGlyphColor;
-      settings.display.resources.secondaryGlyphColor = colors.secondaryGlyphColor;
+      settings.display.resources.secondaryGlyphColor =
+        colors.secondaryGlyphColor;
       settings.display.resources.scoreInfoColor = colors.scoreInfoColor;
       settings.display.resources.barNumberColor = colors.barNumberColor;
 
@@ -223,7 +232,7 @@ export default function AlphaTabViewer({
   }
 
   function handleTrackSelect(track: alphaTab.model.Track) {
-    setEditTrack(track)
+    setEditTrack(track);
     setEditorActive(true);
   }
 
