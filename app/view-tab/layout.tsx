@@ -26,11 +26,7 @@ export default async function ViewTabLayout({
     <main className="min-h-screen flex flex-col items-center">
       <div className="flex-1 w-full flex flex-col items-center">
         <Navbar />
-<<<<<<< HEAD
         <div className="flex-1 flex flex-col w-full p-5">
-=======
-        <div className="flex-1 flex w-full flex-col p-5">
->>>>>>> arun-extra
           <Suspense>
             <div className="w-full py-8">
               {children}

@@ -42,7 +42,7 @@ export default async function DashboardPage() {
             </div>
           </Link>
 
-          <Link href="/tabs" className="block">
+          <Link href="/my-tabs" className="block">
             <div className="border rounded-lg p-4 hover:shadow-lg transition-shadow">
               <h2 className="text-xl font-semibold mb-2">My Tabs</h2>
 
