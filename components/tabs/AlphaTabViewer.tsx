@@ -10,6 +10,7 @@ import PlayerControl from "./Player/PlayerControls";
 import EditBox from "./Editor/EditBox";
 import { useCallback, useState } from "react";
 import ModelCanvas from "../ModelCanvas";
+import exporter from "@/hooks/src/debugExporter copy";
 
 interface AlphaTabViewerProps {
   fileUrl?: string | null;
@@ -87,6 +88,35 @@ export default function AlphaTabViewer({
     setEditorModalActive((v) => !v);
   }, []);
 
+  const handleExport = useCallback(() => {
+    if (!alphaTexContent) {
+      console.warn("No content to export");
+      return;
+    }
+
+    try {
+      console.log("Exporting content:", alphaTexContent);
+
+      const exportedData = exporter(alphaTexContent);
+      console.log("Exported JSON:", exportedData);
+
+      // Optional: Download as JSON file
+      const dataStr = JSON.stringify(exportedData, null, 2);
+      const dataUri =
+        "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+      const exportFileDefaultName = `tab-export-${Date.now()}.json`;
+
+      // const linkElement = document.createElement("a");
+      // linkElement.setAttribute("href", dataUri);
+      // linkElement.setAttribute("download", exportFileDefaultName);
+      // linkElement.click();
+
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Export failed. Check console for errors.");
+    }
+  }, [alphaTexContent]);
+
   function handleAlphaTexChange(newContent: string) {
     setAlphaTexContent(newContent);
   }
@@ -154,6 +184,8 @@ export default function AlphaTabViewer({
                   onShowEditorModal={showEditorModal}
                   tracks={tracks}
                   editorShow={editorModeAvailable}
+                  onExport={handleExport}
+                  alphaTexContent={alphaTexContent}
                 />
               </div>
             </div>
@@ -183,4 +215,3 @@ export default function AlphaTabViewer({
     </div>
   );
 }
-

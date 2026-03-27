@@ -9,6 +9,7 @@ import {
   Printer,
   Repeat,
   StepBack,
+  Video,
 } from "lucide-react";
 import { useState } from "react";
 import ZoomControl from "../UI/ZoomControl";
@@ -17,6 +18,7 @@ import { AlphaTabApi } from "@coderline/alphatab";
 import * as alphaTab from "@coderline/alphatab";
 import { Button } from "@/components/ui/button";
 import TrackSelector from "./TrackSelector";
+import exporter from "@/hooks/src/debugExporter copy";
 
 interface Position {
   current: string;
@@ -32,6 +34,8 @@ interface PlayerControlProps {
   editorActive: boolean;
   onShowEditorModal: () => void;
   editorShow: boolean;
+  onExport?: () => void;
+  alphaTexContent?: string;
 }
 
 export default function PlayerControl({
@@ -43,6 +47,8 @@ export default function PlayerControl({
   editorActive,
   onShowEditorModal,
   editorShow,
+  onExport,
+  alphaTexContent,
 }: PlayerControlProps) {
   const [countInActive, setCountInActive] = useState(false);
   const [metronomeActive, setMetronomeActive] = useState(false);
@@ -83,6 +89,14 @@ export default function PlayerControl({
       apiRef.isLooping = newValue;
     }
   }
+  const handleExport = () => {
+    if (onExport) {
+      onExport();
+    } else {
+      console.warn("Export handler not provided");
+      alert("Export functionality is not available");
+    }
+  };
 
   return (
     <div className="flex items-center justify-between w-full gap-2 overflow-x-auto overflow-y-hidden">
@@ -186,6 +200,16 @@ export default function PlayerControl({
 
         <ZoomControl apiRef={apiRef} />
         <LayoutControl apiRef={apiRef} />
+        <Button
+          onClick={handleExport}
+          disabled={!isPlayerReady}
+          title="Export to JSON"
+          variant={"secondary"}
+          size="sm"
+          className="h-8 w-8 p-0"
+        >
+          <Video size={16}/>
+        </Button>
       </div>
     </div>
   );
