@@ -63,7 +63,6 @@ export default function AlphaTabViewer({
     playing: modelPlaying,
     currentTime: modelCurrentTime,
     duration: modelDuration,
-    scrubbingRef,
     playPause: modelPlayPause,
     restart: modelRestart,
     seekTo: modelSeekTo,

@@ -6,11 +6,10 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface UseModelViewerReturn {
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
   playing: boolean;
   currentTime: number;
   duration: number;
-  scrubbingRef: React.RefObject<boolean>;
   playPause: () => void;
   restart: () => void;
   seekTo: (time: number) => void;
@@ -29,7 +28,6 @@ export function useModelViewer({
   onAnimationEnd,
 }: UseModelViewerOptions): UseModelViewerReturn {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const conatinerRef = useRef<HTMLDivElement>(null);
 
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -52,15 +50,18 @@ export function useModelViewer({
   });
 
   useEffect(() => {
-    const container = canvasRef.current?.parentElement;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const container = canvas.parentElement;
     if (!container) return;
 
-    // get continer dimensions
+    // get container dimensions
     const width = container.clientWidth;
     const height = container.clientHeight;
 
     // renderer
-    const renderer = new three.WebGLRenderer({ canvas: canvasRef.current, antialias: true });
+    const renderer = new three.WebGLRenderer({ canvas, antialias: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true;

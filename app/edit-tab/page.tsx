@@ -103,7 +103,6 @@ export default function EditTabPage() {
       <AlphaTabViewer
         fileUrl={fileUrl}
         editorModeAvailable={true}
-        onContentChange={handleContentChange}
       />
     </div>
   );

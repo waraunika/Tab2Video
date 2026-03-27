@@ -128,7 +128,6 @@ export default function UploadTabs() {
           <div className="border border-border rounded-lg overflow-hidden bg-card">
             <AlphaTabViewer
               fileUrl={fileUrl}
-              fileName={currentFileName ?? undefined}
               editorModeAvailable={true}
             />
           </div>

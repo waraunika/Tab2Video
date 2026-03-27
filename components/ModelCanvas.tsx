@@ -10,7 +10,7 @@ function formatTime(seconds: number) {
 }
 
 interface ModelCanvasProps {
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
   playing: boolean;
   currentTime: number;
   duration: number;
