@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/auth/logout-button";
 import Image from "next/image";
+import { DashboardLink } from "../dashboard-link";
 
 export async function AuthButton() {
   const supabase = await createClient();
@@ -44,9 +45,7 @@ export async function AuthButton() {
 
   return (
     <div className="flex items-center gap-4 justify-between w-full">
-      <div>
-        <Link href="/dashboard">Go to Dashboard</Link>
-      </div>
+      <DashboardLink />
 
       <div className="flex items-center gap-3">
         
