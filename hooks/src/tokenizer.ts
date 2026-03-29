@@ -1,12 +1,11 @@
 // ============================================================
 // enhanced-tokenizer.ts
-// Filters out all metadata, only keeps:
-// - \tempo, \ts, \tuning directives
-// - Notes, chords, rests, measure bars, durations, mod blocks
+// Filters out metadata, keeps musical content and essential directives
 // ============================================================
 
 export type TokenType =
   | "DIRECTIVE"      // \tempo, \ts, \tuning only
+  | "DIRECTIVE_ARG"  // arguments for directives
   | "NOTE"           // fret.string e.g. "12.2"
   | "REST"           // r
   | "CHORD_OPEN"     // (
@@ -14,8 +13,6 @@ export type TokenType =
   | "MOD_BLOCK"      // {contents}
   | "DURATION"       // .N
   | "MEASURE_BAR"    // |
-  | "DIRECTIVE_ARG"      // \tempo, \ts, \tuning only
-
 
 export interface Token {
   type: TokenType;
@@ -30,12 +27,11 @@ export function tokenizeEnhanced(source: string): Token[] {
   const tokens: Token[] = [];
   const lines = source.split("\n");
   
-  // State for skipping metadata
+  // State tracking for skipping metadata
+  let inMetadataSection = true;  // Start in metadata section
   let braceDepth = 0;
-  let inBlockToSkip = false;
-  let inTrackOrStaff = false;
   let inStringLiteral = false;
-  let pendingDirective: string | null = null;
+  let skipCurrentLine = false;
   
   for (let lineNum = 0; lineNum < lines.length; lineNum++) {
     const line = lines[lineNum];
@@ -46,28 +42,49 @@ export function tokenizeEnhanced(source: string): Token[] {
     const trimmed = line.trim();
     if (trimmed === "" || trimmed.startsWith("//")) continue;
     
+    // Check if we've found the staff block - this is where tab content starts
+    if (line.includes('\\staff')) {
+      inMetadataSection = false;
+      // Still need to parse the staff block to find when it ends
+      // The actual tab content comes after the staff block's closing brace
+      continue;
+    }
+    
+    // If we're still in metadata section, skip everything until we find staff
+    if (inMetadataSection) {
+      continue;
+    }
+    
+    // Now we're in the tab content area, but we need to handle remaining directives
+    // and skip any metadata blocks (like the tuning block with label)
+    let lineTokens: Token[] = [];
+    let localBraceDepth = 0;
+    let inBlockToSkip = false;
+    let pendingDirective: string | null = null;
+    
+    i = 0;
     while (i < line.length) {
       const char = line[i];
       
-      // Handle string literals (quoted text) - skip entirely
+      // Handle string literals - skip them entirely
       if (char === '"' && (i === 0 || line[i-1] !== '\\')) {
         inStringLiteral = !inStringLiteral;
         i++;
         continue;
       }
       
-      // Skip everything inside string literals (metadata)
+      // Skip everything inside string literals
       if (inStringLiteral) {
         i++;
         continue;
       }
       
-      // Track braces to skip metadata blocks
+      // Track braces for block detection
       if (char === '{') {
-        braceDepth++;
+        localBraceDepth++;
         
-        // If we're entering a block that's not from a kept directive, skip it
-        if (!pendingDirective && braceDepth === 1) {
+        // If we're not in a pending directive we care about, mark block to skip
+        if (!pendingDirective && localBraceDepth === 1) {
           inBlockToSkip = true;
         }
         
@@ -76,8 +93,8 @@ export function tokenizeEnhanced(source: string): Token[] {
       }
       
       if (char === '}') {
-        braceDepth--;
-        if (braceDepth === 0) {
+        localBraceDepth--;
+        if (localBraceDepth === 0) {
           inBlockToSkip = false;
           pendingDirective = null;
         }
@@ -85,25 +102,8 @@ export function tokenizeEnhanced(source: string): Token[] {
         continue;
       }
       
-      // Skip content inside metadata blocks
+      // Skip content inside blocks we don't care about
       if (inBlockToSkip) {
-        i++;
-        continue;
-      }
-      
-      // Detect track/staff blocks to skip
-      if (line.substr(i, 6) === '\\track' || line.substr(i, 6) === '\\staff') {
-        inTrackOrStaff = true;
-        // Skip the entire line when we see track/staff
-        break;
-      }
-      
-      // If we're in track/staff, skip until we exit
-      if (inTrackOrStaff) {
-        // Check if we're exiting track/staff block
-        if (char === '}' && braceDepth === 0) {
-          inTrackOrStaff = false;
-        }
         i++;
         continue;
       }
@@ -120,18 +120,18 @@ export function tokenizeEnhanced(source: string): Token[] {
         
         // Only keep tempo, ts, tuning directives
         if (KEEP_DIRECTIVES.has(name)) {
-          tokens.push({ type: "DIRECTIVE", value: name, line: ln });
+          lineTokens.push({ type: "DIRECTIVE", value: name, line: ln });
           pendingDirective = name;
           
           // Collect the argument for this directive
-          let args = "";
           // Skip whitespace
           while (i < line.length && /\s/.test(line[i])) {
             i++;
           }
           
           // Handle parenthesized arguments or simple numbers
-          if (line[i] === '(') {
+          let args = "";
+          if (i < line.length && line[i] === '(') {
             args += '(';
             i++;
             let parenDepth = 1;
@@ -150,40 +150,45 @@ export function tokenizeEnhanced(source: string): Token[] {
           }
           
           if (args.length > 0) {
-            tokens.push({ type: "DIRECTIVE_ARG", value: args.trim(), line: ln });
+            lineTokens.push({ type: "DIRECTIVE_ARG", value: args.trim(), line: ln });
           }
         } else {
-          // Skip unrecognized directive and its content
-          // Skip to end of directive (until whitespace, brace, or end)
-          while (i < line.length && !/\s/.test(line[i]) && line[i] !== '{' && line[i] !== '}') {
+          // Skip unrecognized directive - but track if it has a block
+          while (i < line.length && !/\s/.test(line[i]) && line[i] !== '{') {
             i++;
+          }
+          // If this directive is followed by a block, we'll skip it via brace tracking
+          if (i < line.length && line[i] === '{') {
+            // Don't increment i here - let the next loop iteration handle the brace
           }
         }
         continue;
       }
       
+      // Musical content - only process if we're not skipping
+      
       // Measure bar
       if (char === '|') {
-        tokens.push({ type: "MEASURE_BAR", value: "|", line: ln });
+        lineTokens.push({ type: "MEASURE_BAR", value: "|", line: ln });
         i++;
         continue;
       }
       
       // Chord open
       if (char === '(') {
-        tokens.push({ type: "CHORD_OPEN", value: "(", line: ln });
+        lineTokens.push({ type: "CHORD_OPEN", value: "(", line: ln });
         i++;
         continue;
       }
       
       // Chord close
       if (char === ')') {
-        tokens.push({ type: "CHORD_CLOSE", value: ")", line: ln });
+        lineTokens.push({ type: "CHORD_CLOSE", value: ")", line: ln });
         i++;
         continue;
       }
       
-      // Mod block: { ... }
+      // Mod block: { ... } - these are the articulation blocks we want
       if (char === '{') {
         let content = "";
         i++; // skip opening {
@@ -194,7 +199,7 @@ export function tokenizeEnhanced(source: string): Token[] {
           if (depth > 0) content += line[i];
           i++;
         }
-        tokens.push({ type: "MOD_BLOCK", value: content.trim(), line: ln });
+        lineTokens.push({ type: "MOD_BLOCK", value: content.trim(), line: ln });
         continue;
       }
       
@@ -207,14 +212,14 @@ export function tokenizeEnhanced(source: string): Token[] {
           i++;
         }
         if (num.length > 0) {
-          tokens.push({ type: "DURATION", value: num, line: ln });
+          lineTokens.push({ type: "DURATION", value: num, line: ln });
         }
         continue;
       }
       
       // Rest: 'r'
       if (char === 'r' && (i + 1 >= line.length || !/\d/.test(line[i + 1]))) {
-        tokens.push({ type: "REST", value: "r", line: ln });
+        lineTokens.push({ type: "REST", value: "r", line: ln });
         i++;
         continue;
       }
@@ -235,7 +240,7 @@ export function tokenizeEnhanced(source: string): Token[] {
             stringNum += line[i];
             i++;
           }
-          tokens.push({
+          lineTokens.push({
             type: "NOTE",
             value: `${fret}.${stringNum}`,
             line: ln,
@@ -244,13 +249,13 @@ export function tokenizeEnhanced(source: string): Token[] {
         continue;
       }
       
-      // Skip any other characters (they're likely metadata we don't care about)
+      // Skip any other characters
       i++;
     }
     
-    // Reset track/staff flag at end of line if we didn't find closing brace
-    if (inTrackOrStaff && braceDepth === 0) {
-      inTrackOrStaff = false;
+    // Add tokens from this line if we found any
+    if (lineTokens.length > 0) {
+      tokens.push(...lineTokens);
     }
   }
   

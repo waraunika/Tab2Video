@@ -61,6 +61,7 @@ export default function AlphaTabViewer({
   19.1.8{beam Down}
 
   `);
+  const[parsedTexForExport, setParsedTexforExport] = useState<string>("");
 
   // Animation/Video state
   const [animatorModalActive, setAnimatorModalActive] = useState(false);
@@ -156,15 +157,15 @@ export default function AlphaTabViewer({
   }, []);
 
   const handleExport = useCallback(() => {
-    if (!alphaTexContent) {
+    if (!parsedTexForExport) {
       console.warn("No content to export");
       return;
     }
 
     try {
-      console.log("Exporting content:", alphaTexContent);
+      console.log("Exporting content:", parsedTexForExport);
 
-      const exportedData = exporter(alphaTexContent);
+      const exportedData = exporter(parsedTexForExport);
       console.log("Exported JSON:", exportedData);
 
       // Optional: Download as JSON file
@@ -187,6 +188,10 @@ export default function AlphaTabViewer({
     setAlphaTexContent(newContent);
   }
 
+  const handleParsedTexUpdate = useCallback((parsedTex: string) =>{
+    setParsedTexforExport(parsedTex);
+  },[]);
+
   // sync alphatab to GLB
   useSyncedPlayback({
     apiRef,
@@ -208,6 +213,7 @@ export default function AlphaTabViewer({
             tracks={tracks}
             apiRef={apiRef.current}
             onTexUpdate={setAlphaTexContent}
+            onParsedTextUpdate={handleParsedTexUpdate}
           />
         )}
         {/* Animator Modal */}

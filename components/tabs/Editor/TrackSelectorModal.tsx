@@ -2,7 +2,7 @@ import Modal from "@/components/ui/modal";
 import parser from "@/lib/parser/rawToSelected";
 import * as alphaTab from "@coderline/alphatab";
 import { parse } from "path";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 interface TrackSelectorModalProps {
   editorModalActive: boolean;
@@ -11,6 +11,7 @@ interface TrackSelectorModalProps {
   onTrackSelect: (index: alphaTab.model.Track) => void;
   apiRef: alphaTab.AlphaTabApi | null;
   onTexUpdate: (tex: string) => void;
+  onParsedTextUpdate?: (parsedTex: string) => void;
 }
 
 export default function TrackSelectorModal({
@@ -20,6 +21,7 @@ export default function TrackSelectorModal({
   onTrackSelect,
   apiRef,
   onTexUpdate,
+  onParsedTextUpdate,
 }: TrackSelectorModalProps) {
   // Use useMemo to filter tracks only when tracks array changes
   const guitarTracks = useMemo(() => {
@@ -47,6 +49,9 @@ export default function TrackSelectorModal({
     const alphaTex = exporter.exportToString(apiRef.score);
     const parseText = parser(alphaTex, trackName);
     onTexUpdate(parseText);
+    if(onParsedTextUpdate){
+      onParsedTextUpdate(parseText);
+    }
 
     onTrackSelect(tracks[index]);
     console.log("set edit track to ", index);
