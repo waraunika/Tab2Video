@@ -1,196 +1,263 @@
 // ============================================================
-// tokenizer.ts
-// Converts raw AlphaTex text into a flat token stream.
-// This is a pure lexer — no semantic meaning assigned here.
+// enhanced-tokenizer.ts
+// Filters out all metadata, only keeps:
+// - \tempo, \ts, \tuning directives
+// - Notes, chords, rests, measure bars, durations, mod blocks
 // ============================================================
 
 export type TokenType =
-  | "DIRECTIVE" // \tempo \ts \tuning \beaming \ks etc.
-  | "NOTE" // fret.string  e.g. "12.2"
-  | "REST" // r
-  | "CHORD_OPEN" // (
-  | "CHORD_CLOSE" // )
-  | "MOD_BLOCK" // {contents} — already stripped of braces
-  | "DURATION" // .N — already stripped of dot, just the number as string
-  | "MEASURE_BAR" // |
-  | "DIRECTIVE_ARG"; // argument tokens following a directive
+  | "DIRECTIVE"      // \tempo, \ts, \tuning only
+  | "NOTE"           // fret.string e.g. "12.2"
+  | "REST"           // r
+  | "CHORD_OPEN"     // (
+  | "CHORD_CLOSE"    // )
+  | "MOD_BLOCK"      // {contents}
+  | "DURATION"       // .N
+  | "MEASURE_BAR"    // |
+  | "DIRECTIVE_ARG"      // \tempo, \ts, \tuning only
+
 
 export interface Token {
   type: TokenType;
   value: string;
-  line: number; // for error reporting
+  line: number;
 }
 
-// ============================================================
-// Main tokenizer function
-// Returns flat array of tokens in source order
-// ============================================================
+// Directives we want to keep
+const KEEP_DIRECTIVES = new Set(['tempo', 'ts', 'tuning']);
 
-export function tokenize(source: string): Token[] {
+export function tokenizeEnhanced(source: string): Token[] {
   const tokens: Token[] = [];
   const lines = source.split("\n");
-
+  
+  // State for skipping metadata
+  let braceDepth = 0;
+  let inBlockToSkip = false;
+  let inTrackOrStaff = false;
+  let inStringLiteral = false;
+  let pendingDirective: string | null = null;
+  
   for (let lineNum = 0; lineNum < lines.length; lineNum++) {
     const line = lines[lineNum];
     let i = 0;
     const ln = lineNum + 1;
-
-    if (line) {
-      const trimmed = line.trim();
-      if (trimmed === "" || trimmed.startsWith("//")) continue;
-
-      i = 0;
-      while (i < line.length) {
-        // Skip whitespace
-        if (line[i] === " " || line[i] === "\t" || line[i] === "\r") {
-          i++;
-          continue;
+    
+    // Skip empty lines
+    const trimmed = line.trim();
+    if (trimmed === "" || trimmed.startsWith("//")) continue;
+    
+    while (i < line.length) {
+      const char = line[i];
+      
+      // Handle string literals (quoted text) - skip entirely
+      if (char === '"' && (i === 0 || line[i-1] !== '\\')) {
+        inStringLiteral = !inStringLiteral;
+        i++;
+        continue;
+      }
+      
+      // Skip everything inside string literals (metadata)
+      if (inStringLiteral) {
+        i++;
+        continue;
+      }
+      
+      // Track braces to skip metadata blocks
+      if (char === '{') {
+        braceDepth++;
+        
+        // If we're entering a block that's not from a kept directive, skip it
+        if (!pendingDirective && braceDepth === 1) {
+          inBlockToSkip = true;
         }
-
-        // Directive: starts with backslash
-        if (line[i] === "\\") {
-          const start = i;
-          i++; // skip backslash
-          let name = "";
-          while (i < line.length && /\w/.test(line[i])) {
-            name += line[i];
-            i++;
-          }
+        
+        i++;
+        continue;
+      }
+      
+      if (char === '}') {
+        braceDepth--;
+        if (braceDepth === 0) {
+          inBlockToSkip = false;
+          pendingDirective = null;
+        }
+        i++;
+        continue;
+      }
+      
+      // Skip content inside metadata blocks
+      if (inBlockToSkip) {
+        i++;
+        continue;
+      }
+      
+      // Detect track/staff blocks to skip
+      if (line.substr(i, 6) === '\\track' || line.substr(i, 6) === '\\staff') {
+        inTrackOrStaff = true;
+        // Skip the entire line when we see track/staff
+        break;
+      }
+      
+      // If we're in track/staff, skip until we exit
+      if (inTrackOrStaff) {
+        // Check if we're exiting track/staff block
+        if (char === '}' && braceDepth === 0) {
+          inTrackOrStaff = false;
+        }
+        i++;
+        continue;
+      }
+      
+      // Directive handling
+      if (char === '\\') {
+        const start = i;
+        i++; // skip backslash
+        let name = "";
+        while (i < line.length && /[\w-]/.test(line[i])) {
+          name += line[i];
+          i++;
+        }
+        
+        // Only keep tempo, ts, tuning directives
+        if (KEEP_DIRECTIVES.has(name)) {
           tokens.push({ type: "DIRECTIVE", value: name, line: ln });
-
-          // Consume directive arguments until end of line or a note token starts
-          // Directives: \tempo N, \ts N N, \tuning (...), \beaming (...), \ks X, etc.
-          // Arguments are the rest of the trimmed line content after the directive name
-          // We collect them as a single DIRECTIVE_ARG token for the parser to handle
+          pendingDirective = name;
+          
+          // Collect the argument for this directive
           let args = "";
-          // Handle paren-wrapped args like \tuning (E4 B3 G3 D3 A2 E2)
-          let j = i;
-          while (j < line.length) {
-            args += line[j];
-            j++;
-          }
-          args = args.trim();
-          if (args.length > 0) {
-            tokens.push({ type: "DIRECTIVE_ARG", value: args, line: ln });
-          }
-          i = line.length; // directive consumes rest of line
-          continue;
-        }
-
-        // Measure bar
-        if (line[i] === "|") {
-          tokens.push({ type: "MEASURE_BAR", value: "|", line: ln });
-          i++;
-          continue;
-        }
-
-        // Chord open
-        if (line[i] === "(") {
-          tokens.push({ type: "CHORD_OPEN", value: "(", line: ln });
-          i++;
-          continue;
-        }
-
-        // Chord close
-        if (line[i] === ")") {
-          tokens.push({ type: "CHORD_CLOSE", value: ")", line: ln });
-          i++;
-          continue;
-        }
-
-        // Mod block: { ... } — may contain nested parens for bend params
-        if (line[i] === "{") {
-          let content = "";
-          i++; // skip opening {
-          let depth = 0;
-          while (i < line.length) {
-            if (line[i] === "(") depth++;
-            else if (line[i] === ")") depth--;
-            else if (line[i] === "}" && depth === 0) {
-              i++; // skip closing }
-              break;
-            }
-            content += line[i];
+          // Skip whitespace
+          while (i < line.length && /\s/.test(line[i])) {
             i++;
           }
-          tokens.push({ type: "MOD_BLOCK", value: content.trim(), line: ln });
-          continue;
-        }
-
-        // Duration: .N (dot followed by digits)
-        if (line[i] === ".") {
-          i++; // skip dot
-          let num = "";
-          while (i < line.length && /\d/.test(line[i])) {
-            num += line[i];
+          
+          // Handle parenthesized arguments or simple numbers
+          if (line[i] === '(') {
+            args += '(';
             i++;
-          }
-          if (num.length > 0) {
-            tokens.push({ type: "DURATION", value: num, line: ln });
-          }
-          continue;
-        }
-
-        // Rest: 'r' not followed by digit (so we don't confuse with 'r' in identifiers)
-        if (
-          line[i] === "r" &&
-          (i + 1 >= line.length || !/\d/.test(line[i + 1]))
-        ) {
-          tokens.push({ type: "REST", value: "r", line: ln });
-          i++;
-          continue;
-        }
-
-        // NOTE: fret.string — starts with digit(s), followed by dot, followed by digit(s)
-        // We read the fret number here; the dot+string are consumed as DURATION below
-        // BUT we need to distinguish note "12.2" from duration ".4"
-        // A NOTE is digits at the start of a token (not preceded by .)
-        if (/\d/.test(line[i])) {
-          let num = "";
-          while (i < line.length && /\d/.test(line[i])) {
-            num += line[i];
-            i++;
-          }
-          // Check if followed by .digit — that makes it fret.string
-          if (
-            i < line.length &&
-            line[i] === "." &&
-            i + 1 < line.length &&
-            /\d/.test(line[i + 1])
-          ) {
-            i++; // skip the dot
-            let stringNum = "";
-            while (i < line.length && /\d/.test(line[i])) {
-              stringNum += line[i];
+            let parenDepth = 1;
+            while (i < line.length && parenDepth > 0) {
+              if (line[i] === '(') parenDepth++;
+              if (line[i] === ')') parenDepth--;
+              args += line[i];
               i++;
             }
-            tokens.push({
-              type: "NOTE",
-              value: `${num}.${stringNum}`,
-              line: ln,
-            });
           } else {
-            // Just a number without .string — could be a stray arg, skip
-            // (shouldn't happen in well-formed AlphaTex)
+            // Collect until whitespace, brace, or end of line
+            while (i < line.length && !/\s/.test(line[i]) && line[i] !== '{' && line[i] !== '}') {
+              args += line[i];
+              i++;
+            }
           }
-          continue;
+          
+          if (args.length > 0) {
+            tokens.push({ type: "DIRECTIVE_ARG", value: args.trim(), line: ln });
+          }
+        } else {
+          // Skip unrecognized directive and its content
+          // Skip to end of directive (until whitespace, brace, or end)
+          while (i < line.length && !/\s/.test(line[i]) && line[i] !== '{' && line[i] !== '}') {
+            i++;
+          }
         }
+        continue;
       }
-
-      // Skip leading whitespace
-
-      // Skip any other character (letters in mod blocks are already consumed above)
+      
+      // Measure bar
+      if (char === '|') {
+        tokens.push({ type: "MEASURE_BAR", value: "|", line: ln });
+        i++;
+        continue;
+      }
+      
+      // Chord open
+      if (char === '(') {
+        tokens.push({ type: "CHORD_OPEN", value: "(", line: ln });
+        i++;
+        continue;
+      }
+      
+      // Chord close
+      if (char === ')') {
+        tokens.push({ type: "CHORD_CLOSE", value: ")", line: ln });
+        i++;
+        continue;
+      }
+      
+      // Mod block: { ... }
+      if (char === '{') {
+        let content = "";
+        i++; // skip opening {
+        let depth = 1;
+        while (i < line.length && depth > 0) {
+          if (line[i] === '{') depth++;
+          else if (line[i] === '}') depth--;
+          if (depth > 0) content += line[i];
+          i++;
+        }
+        tokens.push({ type: "MOD_BLOCK", value: content.trim(), line: ln });
+        continue;
+      }
+      
+      // Duration: .N
+      if (char === '.') {
+        i++; // skip dot
+        let num = "";
+        while (i < line.length && /\d/.test(line[i])) {
+          num += line[i];
+          i++;
+        }
+        if (num.length > 0) {
+          tokens.push({ type: "DURATION", value: num, line: ln });
+        }
+        continue;
+      }
+      
+      // Rest: 'r'
+      if (char === 'r' && (i + 1 >= line.length || !/\d/.test(line[i + 1]))) {
+        tokens.push({ type: "REST", value: "r", line: ln });
+        i++;
+        continue;
+      }
+      
+      // NOTE: fret.string
+      if (/\d/.test(char)) {
+        let fret = "";
+        while (i < line.length && /\d/.test(line[i])) {
+          fret += line[i];
+          i++;
+        }
+        
+        // Check for .string pattern
+        if (i < line.length && line[i] === '.' && i + 1 < line.length && /\d/.test(line[i + 1])) {
+          i++; // skip dot
+          let stringNum = "";
+          while (i < line.length && /\d/.test(line[i])) {
+            stringNum += line[i];
+            i++;
+          }
+          tokens.push({
+            type: "NOTE",
+            value: `${fret}.${stringNum}`,
+            line: ln,
+          });
+        }
+        continue;
+      }
+      
+      // Skip any other characters (they're likely metadata we don't care about)
       i++;
     }
+    
+    // Reset track/staff flag at end of line if we didn't find closing brace
+    if (inTrackOrStaff && braceDepth === 0) {
+      inTrackOrStaff = false;
+    }
   }
-
+  
   return tokens;
 }
 
-// ============================================================
-// Debug helper: print token stream
-// ============================================================
-
+// Debug helper
 export function printTokens(tokens: Token[]): void {
   for (const t of tokens) {
     console.log(

@@ -36,6 +36,8 @@ interface PlayerControlProps {
   editorShow: boolean;
   onExport?: () => void;
   alphaTexContent?: string;
+  onShowAnimatorModal?: () => void;
+  animatorShow?: boolean;
 }
 
 export default function PlayerControl({
@@ -49,6 +51,8 @@ export default function PlayerControl({
   editorShow,
   onExport,
   alphaTexContent,
+  onShowAnimatorModal,
+  animatorShow = false,
 }: PlayerControlProps) {
   const [countInActive, setCountInActive] = useState(false);
   const [metronomeActive, setMetronomeActive] = useState(false);
@@ -95,6 +99,15 @@ export default function PlayerControl({
     } else {
       console.warn("Export handler not provided");
       alert("Export functionality is not available");
+    }
+  };
+
+  const handleAnimatorClick = () => {
+    if (onShowAnimatorModal) {
+      onShowAnimatorModal();
+    } else {
+      console.warn("Animator handler not provided");
+      alert("Animation/Video feature is not available");
     }
   };
 
@@ -208,7 +221,7 @@ export default function PlayerControl({
           size="sm"
           className="h-8 w-8 p-0"
         >
-          <Video size={16}/>
+          <Video size={16} />
         </Button>
       </div>
     </div>

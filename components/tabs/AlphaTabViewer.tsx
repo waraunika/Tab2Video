@@ -6,6 +6,7 @@ import { useModelViewer } from "@/hooks/useModelViewer";
 import { useSyncedPlayback } from "@/hooks/useSyncedPlayback";
 import * as alphaTab from "@coderline/alphatab";
 import TrackSelectorModal from "./Editor/TrackSelectorModal";
+import AnimatorSelectorModal from "../model-viewer/animatorSelectorModel";
 import PlayerControl from "./Player/PlayerControls";
 import EditBox from "./Editor/EditBox";
 import { useCallback, useState } from "react";
@@ -34,13 +35,42 @@ export default function AlphaTabViewer({
   const [editorModalActive, setEditorModalActive] = useState(false);
   const [editorActive, setEditorActive] = useState(false);
   const [editTrack, setEditTrack] = useState<alphaTab.model.Track | null>(null);
-  const [alphaTexContent, setAlphaTexContent] = useState(`\\title "My Tab"
-    \\subtitle "In AlphaTeX"
-    \\tempo 120
+  const [alphaTexContent, setAlphaTexContent] = useState(`
+\\tuning (E4 B3 G3 D3 A2 E2)
+\\ts (4 4)
+\\tempo 90
+  12.2{v}.2{beam Down}
+  14.2{v}.4{beam Down}
+  15.2.8{beam Down}
+  17.2.8{beam Down}
+|
+  14.1{v}.2{beam Down}
+  17.2.8{beam Down}
+  15.1.8{beam Down}
+  14.1{h}.16{tu (3 2) beam Down}
+  15.1{h}.16{tu (3 2) beam Down}
+  14.1.16{tu (3 2) beam Down}
+  17.2.8{beam Down}
+|
+  15.2{v}.4{d beam Down}
+  17.2{h}.16{beam Down}
+  15.2.16{beam Down}
+  14.2.8{beam Down}
+  14.1.8{beam Down}
+  17.1.8{beam Down}
+  19.1.8{beam Down}
 
-    . \\notes :4 C D E F | G A B c |
-    . \\notes :8 C D E F G A B c |
   `);
+
+  // Animation/Video state
+  const [animatorModalActive, setAnimatorModalActive] = useState(false);
+  const [animatorData, setAnimatorData] = useState<{
+    track: alphaTab.model.Track;
+    alphaTex: string;
+    parsedTex: string;
+    trackName: string;
+  } | null>(null);
+  const [showAnimator, setShowAnimator] = useState(false);
 
   const {
     apiRef,
@@ -88,6 +118,43 @@ export default function AlphaTabViewer({
     setEditorModalActive((v) => !v);
   }, []);
 
+  const handleShowAnimatorModal = useCallback(() => {
+    setAnimatorModalActive(true);
+  }, []);
+
+  const handleAnimatorModalClose = useCallback(() => {
+    setAnimatorModalActive(false);
+  }, []);
+
+  const handleAnimatorDataUpdate = useCallback(
+    (data: {
+      track: alphaTab.model.Track;
+      alphaTex: string;
+      parsedTex: string;
+      trackName: string;
+    }) => {
+      console.log("Animator data received:", {
+        trackName: data.trackName,
+        alphaTexLength: data.alphaTex.length,
+        parsedTexLength: data.parsedTex.length,
+      });
+
+      setAnimatorData(data);
+      setShowAnimator(true); // Show the animation panel
+      setAnimatorModalActive(false); // Close the modal
+
+      // You can also trigger video generation here
+      // For example, start processing the parsedTex for animation
+      // generateVideoFromAlphaTex(data.parsedTex);
+    },
+    [],
+  );
+
+  const handleCloseAnimator = useCallback(() => {
+    setShowAnimator(false);
+    setAnimatorData(null);
+  }, []);
+
   const handleExport = useCallback(() => {
     if (!alphaTexContent) {
       console.warn("No content to export");
@@ -106,11 +173,10 @@ export default function AlphaTabViewer({
         "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
       const exportFileDefaultName = `tab-export-${Date.now()}.json`;
 
-      // const linkElement = document.createElement("a");
-      // linkElement.setAttribute("href", dataUri);
-      // linkElement.setAttribute("download", exportFileDefaultName);
-      // linkElement.click();
-
+      const linkElement = document.createElement("a");
+      linkElement.setAttribute("href", dataUri);
+      linkElement.setAttribute("download", exportFileDefaultName);
+      linkElement.click();
     } catch (error) {
       console.error("Export failed:", error);
       alert("Export failed. Check console for errors.");
@@ -144,6 +210,19 @@ export default function AlphaTabViewer({
             onTexUpdate={setAlphaTexContent}
           />
         )}
+        {/* Animator Modal */}
+        {animatorModalActive && (
+          <AnimatorSelectorModal
+            animatorModalActive={animatorModalActive}
+            onClose={handleAnimatorModalClose}
+            tracks={tracks}
+            onTrackSelect={(track) => {
+              console.log("Selected track for animation:", track.name);
+            }}
+            apiRef={apiRef.current}
+            onAnimatorDataUpdate={handleAnimatorDataUpdate}
+          />
+        )}
 
         {/* Loading overlay */}
         {isLoading && (
@@ -166,6 +245,47 @@ export default function AlphaTabViewer({
               />
             </div>
           )}
+          {/* NEW: Animator Panel - shows when track is selected for animation */}
+          {showAnimator && animatorData && (
+            <div className="w-full sm:w-1/2 h-full border-r border-zinc-200 dark:border-zinc-800 overflow-y-auto">
+              <div className="p-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">
+                    Animation Track: {animatorData.trackName}
+                  </h3>
+                  <button
+                    onClick={handleCloseAnimator}
+                    className="px-2 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                {/* Display parsed AlphaTex content */}
+                <div className="bg-zinc-900 p-4 rounded-lg">
+                  <pre className="text-xs text-green-400 overflow-x-auto">
+                    {animatorData.parsedTex}
+                  </pre>
+                </div>
+
+                {/* Add your video generation UI here */}
+                <div className="mt-4">
+                  <button
+                    className="w-full px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+                    onClick={() => {
+                      console.log(
+                        "Generate video from:",
+                        animatorData.parsedTex,
+                      );
+                      // Call your video generation function here
+                    }}
+                  >
+                    Generate Video
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div
             className={`flex flex-col h-full ${editorActive ? "w-full sm:w-1/2" : "w-full"} overflow-hidden`}
@@ -186,6 +306,8 @@ export default function AlphaTabViewer({
                   editorShow={editorModeAvailable}
                   onExport={handleExport}
                   alphaTexContent={alphaTexContent}
+                  onShowAnimatorModal={handleShowAnimatorModal}
+                  animatorShow={true}
                 />
               </div>
             </div>
